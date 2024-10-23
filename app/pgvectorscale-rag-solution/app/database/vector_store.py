@@ -8,6 +8,10 @@ from config.settings import get_settings
 from openai import OpenAI
 from timescale_vector import client
 
+# from langchain_community.llms import Ollama
+# llm = Ollama(model="llama3.2")
+
+from langchain_community.embeddings import OllamaEmbeddings
 
 class VectorStore:
     """A class for managing vector operations and database interactions."""
@@ -24,8 +28,9 @@ class VectorStore:
             self.vector_settings.embedding_dimensions,
             time_partition_interval=self.vector_settings.time_partition_interval,
         )
+        self.ollama_emb = OllamaEmbeddings(model="llama3.2")
 
-    def get_embedding(self, text: str) -> List[float]:
+    def get_embedding(self, text: str, model: str = 'OpenAI') -> List[float]:
         """
         Generate embedding for the given text.
 
@@ -35,19 +40,34 @@ class VectorStore:
         Returns:
             A list of floats representing the embedding.
         """
-        text = text.replace("\n", " ")
-        start_time = time.time()
-        embedding = (
-            self.openai_client.embeddings.create(
-                input=[text],
-                model=self.embedding_model,
-            )
-            .data[0]
-            .embedding
-        )
-        elapsed_time = time.time() - start_time
-        logging.info(f"Embedding generated in {elapsed_time:.3f} seconds")
-        return embedding
+        if model == 'OpenAI':
+          text = text.replace("\n", " ")
+          start_time = time.time()
+          embedding = (
+              self.openai_client.embeddings.create(
+                  input=[text],
+                  model=self.embedding_model,
+              )
+              .data[0]
+              .embedding
+          )
+          elapsed_time = time.time() - start_time
+          logging.info(f"Embedding generated in {elapsed_time:.3f} seconds")
+          return embedding
+        elif model == 'llama':
+          text = text.replace("\n", " ")
+          start_time = time.time()
+          embedding = (
+              # do magic here
+              # self.ollama_emb.embed_documents(text.split('.'))
+              # self.ollama_emb.embed_documents([text])
+              self.ollama_emb.embed_query(text)
+          )
+          elapsed_time = time.time() - start_time
+          logging.info(f"Embedding generated in {elapsed_time:.3f} seconds")
+          return embedding
+        else:
+          raise ValueError("Invalid model")
 
     def create_tables(self) -> None:
         """Create the necessary tablesin the database"""
@@ -55,7 +75,8 @@ class VectorStore:
 
     def create_index(self) -> None:
         """Create the StreamingDiskANN index to spseed up similarity search"""
-        self.vec_client.create_embedding_index(client.DiskAnnIndex())
+        # self.vec_client.create_embedding_index(client.DiskAnnIndex())
+        self.vec_client.create_embedding_index(client.HNSWIndex())
 
     def drop_index(self) -> None:
         """Drop the StreamingDiskANN index in the database"""
@@ -110,7 +131,7 @@ class VectorStore:
                 vector_store.search("What are your shipping options?")
             Search with metadata filter:
                 vector_store.search("Shipping options", metadata_filter={"category": "Shipping"})
-        
+
         Predicates Examples:
             Search with predicates:
                 vector_store.search("Pricing", predicates=client.Predicates("price", ">", 100))
@@ -118,12 +139,12 @@ class VectorStore:
                 complex_pred = (client.Predicates("category", "==", "Electronics") & client.Predicates("price", "<", 1000)) | \
                                (client.Predicates("category", "==", "Books") & client.Predicates("rating", ">=", 4.5))
                 vector_store.search("High-quality products", predicates=complex_pred)
-        
+
         Time-based filtering:
             Search with time range:
                 vector_store.search("Recent updates", time_range=(datetime(2024, 1, 1), datetime(2024, 1, 31)))
         """
-        query_embedding = self.get_embedding(query_text)
+        query_embedding = self.get_embedding(query_text, model='llama')
 
         start_time = time.time()
 

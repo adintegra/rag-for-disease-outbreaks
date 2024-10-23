@@ -43,7 +43,8 @@ class VectorStoreSettings(BaseModel):
     """Settings for the VectorStore."""
 
     table_name: str = "embeddings"
-    embedding_dimensions: int = 1536
+    # embedding_dimensions: int = 1536
+    embedding_dimensions: int = 3072
     time_partition_interval: timedelta = timedelta(days=7)
 
 

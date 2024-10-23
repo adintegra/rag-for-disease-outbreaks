@@ -5,3 +5,5 @@ python-dotenv
 timescale-vector
 instructor
 anthropic
+langchain-community
+langchain-huggingface
