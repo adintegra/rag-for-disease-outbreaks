@@ -1,3 +1,4 @@
+from time import sleep
 import pandas as pd
 import json
 import re
@@ -5,6 +6,7 @@ from langchain_community.llms import Ollama
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, sessionmaker
+import requests
 
 
 DB_URL = 'postgresql://postgres:password@127.0.0.1/postgres'
@@ -30,18 +32,39 @@ def remove_tags(string):
   return result.strip()
 
 def load_json():
-
   with open('dons.json') as json_file:
     data = json.load(json_file)
 
     # df = pd.read_json(data)
-    df = pd.json_normalize(data, "value")
+    # df = pd.json_normalize(data, "value")
+    df = pd.json_normalize(data)
+
+    # print(df.head())
+    # print(df.columns)
+
+    #  Drop columns
+    df.drop(columns=['EmergencyEvent.Id',
+       'EmergencyEvent.LastModified', 'EmergencyEvent.PublicationDate',
+       'EmergencyEvent.DateCreated', 'EmergencyEvent.IncludeInSitemap',
+       'EmergencyEvent.SystemSourceKey', 'EmergencyEvent.UrlName',
+       'EmergencyEvent.ItemDefaultUrl', 'EmergencyEvent.healthtopics',
+       'EmergencyEvent.Title', 'EmergencyEvent.EventId',
+       'EmergencyEvent.EmergencyEventStartDate',
+       'EmergencyEvent.healthtopictypes', 'EmergencyEvent.Provider',
+       'EmergencyEvent'], inplace=True)
 
     # Clean up the data
+    df['Summary'] = df['Summary'].fillna('').apply(str)
+    df['Epidemiology'] = df['Epidemiology'].fillna('').apply(str)
+    df['Assessment'] = df['Assessment'].fillna('').apply(str)
+    df['Overview'] = df['Overview'].fillna('').apply(str)
+
     df['Summary'] = df['Summary'].apply(lambda cw : remove_tags(cw))
     df['Epidemiology'] = df['Epidemiology'].apply(lambda cw : remove_tags(cw))
     df['Assessment'] = df['Assessment'].apply(lambda cw : remove_tags(cw))
     df['Overview'] = df['Overview'].apply(lambda cw : remove_tags(cw))
+
+    df['Url'] = df['UrlName'].apply(lambda x: f'https://www.who.int/emergencies/disease-outbreak-news/item/{x}')
 
     # print(df.head())
     df.to_csv('dons.csv', sep=";", index=False)
@@ -72,6 +95,39 @@ def create_table():
   engine = create_engine(DB_URL)
   Base.metadata.create_all(engine)
 
+def retrieve_dons():
+  '''This is a function to retrieve the Disease Outbreak News from the WHO API. It takes about 5 minutes to run.'''
 
-# create_table()
-load_json()
+  # url = 'https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,TitleSuffix,OverrideTitle,UseOverrideTitle,regionscountries,ItemDefaultUrl,FormattedDate,PublicationDateAndTime&%24format=json&%24top=20&%24skip={}&%24count=true'
+  url = 'https://www.who.int/api/news/diseaseoutbreaknews?sf_culture=en&%24orderby=PublicationDate%20asc&%24select=Title,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,TitleSuffix,UrlName&%24format=json&%24count=true&%24top='
+  url = 'https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,TitleSuffix,UrlName&%24format=json&%24top=20&%24skip={}&%24count=true'
+
+  all_data = []
+  skip = 0
+  total_records = 3124
+  while skip < total_records:
+    response = requests.get(url.format(skip))
+    if response.status_code == 200:
+      data = response.json()
+      all_data.extend(data['value'])
+      skip += 20
+    else:
+      print(f"Failed to retrieve data at skip={skip}")
+      break
+    sleep(1)
+
+  with open('dons.json', 'w') as json_file:
+    json.dump(all_data, json_file, indent=4)
+
+def main():
+  # Uncomment for fresh data retrieval and pre-precessing
+  # retrieve_dons()
+  load_json()
+
+  # create_table()
+  # get_embeddings()
+
+
+## ------------------------------------------------------
+if __name__ == '__main__':
+  main()
