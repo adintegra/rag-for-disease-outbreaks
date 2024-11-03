@@ -1,17 +1,26 @@
-name: timescaledb
+version: "3.9"
+name: pgvector
 
 services:
-  timescaledb:
-    image: timescale/timescaledb-ha:pg16
-    container_name: timescaledb
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=password
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector
+    restart: unless-stopped
     ports:
       - "5432:5432"
     volumes:
-      - timescaledb_data:/var/lib/postgresql/data
-    restart: unless-stopped
+      - pgvector_data:/var/lib/postgresql/data
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: password
+
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
 
 volumes:
-  timescaledb_data:
+  pgvector_data:
