@@ -2,10 +2,6 @@ from time import sleep
 import pandas as pd
 import json
 import re
-from langchain_community.llms import Ollama
-from sqlalchemy import create_engine, Column, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import declarative_base, sessionmaker
 import requests
 
 

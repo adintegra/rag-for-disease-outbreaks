@@ -1,10 +1,7 @@
 # WHO DON Retriever
 
-Because the PyAirbyte library is not fully mature, let's create our separate python environment for it.
+The code in this directory scrapes the WHO's DONs (Disease Outbreak News) [articles](https://www.who.int/emergencies/disease-outbreak-news) and saves them to a JSON file. `pg-loader.py` can also be used to convert the JSON file to CSV.
 
 ```sh
-conda create --name who-don-retriever python=3.10
-
-pip install -r requirements.txt
-
+python pg-loader.py
 ```
