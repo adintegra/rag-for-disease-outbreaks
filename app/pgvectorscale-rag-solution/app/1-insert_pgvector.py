@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy import DateTime, create_engine, Column, Integer, Text, JSON, text
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
-from pgvector.sqlalchemy import Vector, HALFVEC
+from pgvector.sqlalchemy import HALFVEC
 
 from langchain_nomic import NomicEmbeddings
 from langchain_ollama import OllamaEmbeddings
@@ -205,3 +205,14 @@ upsert(records_df)
 
 # # Create retriever
 # retriever = vectorstore.as_retriever(k=3)
+
+
+# text = "..." # your text
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
+# text_splitter = RecursiveCharacterTextSplitter(
+#     # Set a really small chunk size, just to show.
+#     chunk_size = 256,
+#     chunk_overlap  = 20
+# )
+
+# docs = text_splitter.create_documents([text])
