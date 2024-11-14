@@ -36,7 +36,7 @@ target-version = "py312"
 
 [lint]
 # Add the `line-too-long` rule to the enforced rule set
-extend-select = ["E501"]
+#extend-select = ["E501"]
 
 [format]
 # Like Black, use double quotes for strings
