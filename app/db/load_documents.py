@@ -57,8 +57,7 @@ def main():
     )
 
   # Read the CSV file and prepare records
-  # df = pd.read_csv("../data/dons.csv", sep=";")
-  df = pd.read_csv("../pgvectorscale-rag-solution/data/dons.csv", sep=";")
+  df = pd.read_csv("../data/dons.csv", sep=";")
   records_df = df.apply(prepare_record, axis=1)
 
   upsert(records_df)

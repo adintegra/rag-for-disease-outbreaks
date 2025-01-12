@@ -86,6 +86,11 @@ See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape t
 
 
 
+```sh
+docker run -d -p 3000:8080 -e OLLAMA_BASE_URL=http://10.7.7.141 -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+```
+
+
 
 ## Cosine Similarity in Vector Search
 
