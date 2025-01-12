@@ -5,10 +5,16 @@
 - [MAS Master Thesis](#mas-master-thesis)
 - [Introduction](#introduction)
 - [Planning](#planning)
-- [Code Environment](#code-environment)
+- [Getting Started](#getting-started)
+  - [Python Environment](#python-environment)
+  - [Database Setup](#database-setup)
 - [Data Sources](#data-sources)
 - [Data Acquisition](#data-acquisition)
-  - [Approach 1: RAG](#approach-1-rag)
+- [Approach 1: RAG](#approach-1-rag)
+- [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
+  - [What is Cosine Similarity?](#what-is-cosine-similarity)
+  - [Cosine Distance](#cosine-distance)
+  - [Interpreting Results](#interpreting-results)
 - [References](#references)
   - [YouTube](#youtube)
   - [Articles](#articles)
@@ -27,16 +33,43 @@ TODO:
 TODO: embed a project plan
 
 
-## Code Environment
+## Getting Started
+
+### Python Environment
 
 On MacOS you must install a native ARM build if you are running on Apple Silicon (Mn processors). Otherwise, Python will default to x86 builds which will run on Rosetta and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
 
-```
+```sh
 CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
 
 conda env remove --name pg-vector-rag
 
 pip install -r requirements.txt
+```
+
+### Database Setup
+
+This project uses the [pgvector](https://github.com/pgvector/pgvector) Postgres extension as a vector store. This allow the data to be stored alongside the embeddings and can be accessed easily through any SQL querying utility.
+If you do not wish to run this locally, a cloud-based service such as [Supabase](https://supabase.com/modules/vector) could also be used.
+
+There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance. **Note:** Please create an empty directory `pgvector_data` before bringing the container up for the first time.
+
+```sh
+mkdir pgvector_data
+docker compose up -d
+```
+
+Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensure you have a `.env` file present (use the provided `.example.env` for guidance) and run:
+
+```sh
+python create_db.py
+```
+
+At the time of writing (Jan 2025) LangChain is quite far behind in the version of pgvector it supports (v0.2.5 – current version is v0.3.6). There is an open [PR](https://github.com/langchain-ai/langchain-postgres/pull/147) for supporting the new features (especially support for the sparse vector type `halfvec`).
+This version of the code can be installed directly from GitHub:
+
+```sh
+pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e37aad615ee3cbd4c6bd4a693a76d
 ```
 
 ## Data Sources
@@ -47,7 +80,45 @@ Data source of interest will be found in the [./data](./data/) folder.
 
 See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape the data.
 
-### Approach 1: RAG
+## Approach 1: RAG
+
+
+
+
+
+
+## Cosine Similarity in Vector Search
+
+### What is Cosine Similarity?
+
+Cosine similarity measures the cosine of the angle between two vectors in a multi-dimensional space. It's a measure of orientation rather than magnitude.
+
+- Range: -1 to 1 (for normalized vectors, which is typical in text embeddings)
+- 1: Vectors point in the same direction (most similar)
+- 0: Vectors are orthogonal (unrelated)
+- -1: Vectors point in opposite directions (most dissimilar)
+
+### Cosine Distance
+
+In pgvector, the `<=>` operator computes cosine distance, which is 1 - cosine similarity.
+
+- Range: 0 to 2
+- 0: Identical vectors (most similar)
+- 1: Orthogonal vectors
+- 2: Opposite vectors (most dissimilar)
+
+### Interpreting Results
+
+When you get results from similarity_search:
+
+- Lower distance values indicate higher similarity.
+- A distance of 0 would mean exact match (rarely happens with embeddings).
+- Distances closer to 0 indicate high similarity.
+- Distances around 1 suggest little to no similarity.
+- Distances approaching 2 indicate opposite meanings (rare in practice).
+
+
+
 
 
 

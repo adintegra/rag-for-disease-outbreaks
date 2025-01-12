@@ -1,0 +1,16 @@
+ruff
+pandas
+openai
+psycopg
+python-dotenv
+instructor
+anthropic
+langchain-community
+langchain-huggingface
+langchain-nomic
+nomic[local]
+pgvector
+psycopg2
+langchain_ollama
+langchain_experimental
+tqdm

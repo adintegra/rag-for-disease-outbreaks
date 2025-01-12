@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    #chat-container {
+      height: 400px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    #message-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    #message-input {
+      flex-grow: 1;
+      padding: 10px;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .user-message {
+      background-color: #e3f2fd;
+      margin-left: 20%;
+    }
+
+    .bot-message {
+      background-color: #f5f5f5;
+      margin-right: 20%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="chat-container"></div>
+  <form id="message-form">
+    <input type="text" id="message-input" placeholder="Type your message..." required>
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const chatContainer = document.getElementById('chat-container');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+
+    messageForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      // Add user message to chat
+      addMessage(message, 'user');
+      messageInput.value = '';
+
+      try {
+        // Send message to API
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: message }),
+        });
+
+        if (!response.ok) throw new Error('API request failed');
+
+        const data = await response.json();
+        // Add bot response to chat
+        addMessage(data.response, 'bot');
+      } catch (error) {
+        console.error('Error:', error);
+        addMessage('Sorry, there was an error processing your request.', 'bot');
+      }
+    });
+
+    function addMessage(text, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}-message`;
+      messageDiv.textContent = text;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  </script>
+</body>
+
+</html>
