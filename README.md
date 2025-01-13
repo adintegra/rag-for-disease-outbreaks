@@ -15,6 +15,7 @@
   - [What is Cosine Similarity?](#what-is-cosine-similarity)
   - [Cosine Distance](#cosine-distance)
   - [Interpreting Results](#interpreting-results)
+  - [Sample Questions](#sample-questions)
 - [References](#references)
   - [YouTube](#youtube)
   - [Articles](#articles)
@@ -125,8 +126,13 @@ When you get results from similarity_search:
 
 
 
+### Sample Questions
 
-
+- In which countries is Malaria most prevalent?
+- Which diseases are prevalent in Kenya?
+- Which were the largest disease outbreaks in the last 20 years?
+- Where were outbreaks with the most severe impacts, e.g. deaths?
+-
 
 ## References
 

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from langchain.vectorstores import PGVector
 import os
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from dotenv import load_dotenv
 
 # from langchain_postgres import PGVector
 from sqlalchemy import create_engine
@@ -15,8 +16,12 @@ from sqlalchemy import select
 app = Flask(__name__)
 
 # Initialize the embedding model and vector store
-embeddings = OllamaEmbeddings(model="all-minilm", base_url="http://10.7.7.141:11434")
-llm = OllamaLLM(model="llama3.2", base_url="http://10.7.7.141:11434", temperature=0.5)
+load_dotenv("../.env")
+embeddings = OllamaEmbeddings(model="all-minilm", base_url=os.getenv("OLLAMA_BASE_URL"))
+# llm = OllamaLLM(
+#   model="llama3.2", base_url=os.getenv("OLLAMA_BASE_URL"), temperature=0.5
+# )
+llm = OllamaLLM(model="phi4", base_url=os.getenv("OLLAMA_BASE_URL"))
 
 vector_store = None
 
@@ -90,7 +95,15 @@ Context:
 
   response = llm.invoke(prompt_text)
 
-  return response
+  formatted_response = response
+  formatted_response += "<br /><br />- - - - - - - - - - - -<br />Here are the retrieved documents most relevant to the query:<br /><br />"
+
+  for doc in retrieved_docs:
+    formatted_response += f"<a href='{doc.url}' target='_blank'>Document</a>"
+    formatted_response += f"<p>Cosine Similarity: {doc.l2_distance}</p>"
+    formatted_response += f"<p>Content: {doc.contents[:350]}...</p>"
+
+  return formatted_response
 
 
 @app.route("/")

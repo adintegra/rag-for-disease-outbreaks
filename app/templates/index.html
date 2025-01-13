@@ -96,7 +96,9 @@
     function addMessage(text, sender) {
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${sender}-message`;
-      messageDiv.textContent = text;
+      messageDiv.setAttribute('markdown', 1);
+      // messageDiv.textContent = text;
+      messageDiv.innerHTML = text;
       chatContainer.appendChild(messageDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
