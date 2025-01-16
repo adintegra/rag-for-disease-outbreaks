@@ -72,6 +72,12 @@
       addMessage(message, 'user');
       messageInput.value = '';
 
+      // Show loading spinner
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'message bot-message';
+      loadingDiv.innerHTML = '<img src="/static/spinner.svg" alt="Loading..." style="width: 22px; height: 22px;">';
+      chatContainer.appendChild(loadingDiv);
+
       try {
         // Send message to API
         const response = await fetch('/search', {
@@ -81,6 +87,9 @@
           },
           body: JSON.stringify({ query: message }),
         });
+
+        // Remove loading spinner
+        chatContainer.removeChild(loadingDiv);
 
         if (!response.ok) throw new Error('API request failed');
 

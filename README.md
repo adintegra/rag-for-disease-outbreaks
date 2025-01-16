@@ -29,6 +29,8 @@
 
 TODO:
 
+Google Doc: https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms
+
 ## Planning
 
 TODO: embed a project plan
