@@ -1,27 +1,30 @@
-## MAS Master Thesis
+# RAG for Malaria Outbreaks
 
 **How can multi-modal data fusion inform and enhance the prediction and reporting of malaria outbreaks?**
 
-- [MAS Master Thesis](#mas-master-thesis)
-- [Introduction](#introduction)
-- [Getting Started](#getting-started)
-  - [Python Environment](#python-environment)
-  - [Database Setup](#database-setup)
-- [Data Sources](#data-sources)
-- [Data Acquisition](#data-acquisition)
-- [Approach 1: RAG](#approach-1-rag)
-- [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
-  - [What is Cosine Similarity?](#what-is-cosine-similarity)
-  - [Cosine Distance](#cosine-distance)
-  - [Interpreting Results](#interpreting-results)
-  - [Sample Questions](#sample-questions)
-- [References](#references)
-  - [YouTube](#youtube)
-  - [Articles](#articles)
-  - [Repos](#repos)
+- [RAG for Malaria Outbreaks](#rag-for-malaria-outbreaks)
+  - [Introduction](#introduction)
+  - [Getting Started](#getting-started)
+    - [Python Environment](#python-environment)
+    - [Database Setup](#database-setup)
   - [Data](#data)
-  - [Scientific Papers](#scientific-papers)
-  - [Technical Articles](#technical-articles)
+    - [Data Acquisition \& Pre-Processing](#data-acquisition--pre-processing)
+    - [Data Ingestion](#data-ingestion)
+  - [LLM](#llm)
+    - [Ollama](#ollama)
+  - [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
+    - [What is Cosine Similarity?](#what-is-cosine-similarity)
+    - [Cosine Distance](#cosine-distance)
+    - [Interpreting Results](#interpreting-results)
+  - [RAG](#rag)
+    - [Sample Questions](#sample-questions)
+  - [References](#references)
+    - [YouTube](#youtube)
+    - [Articles](#articles)
+    - [Repos](#repos)
+    - [Data](#data-1)
+    - [Scientific Papers](#scientific-papers)
+    - [Technical Articles](#technical-articles)
 
 
 ## Introduction
@@ -30,7 +33,7 @@ This repository contains the code for my master's thesis project. It is designed
 
 The repository contains all required elements for a running RAG application, from data collection, pre-processing through storage, retrieval and generation.
 
-The corresponding text can be found here: https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms
+The corresponding text can be found in this [Google Doc](https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms).
 
 ## Getting Started
 
@@ -38,7 +41,7 @@ The corresponding text can be found here: https://docs.google.com/document/d/1yr
 
 For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other Python environments.
 
-On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run on Rosetta and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
+On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run in Rosetta (i.e. under emulation) and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
 
 ```sh
 CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
@@ -74,25 +77,25 @@ This version of the code can be installed directly from GitHub:
 pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e37aad615ee3cbd4c6bd4a693a76d
 ```
 
-## Data Sources
+## Data
 
 A list of data sources of interest can be found in the [./data](./data/) folder.
 
-## Data Acquisition
+### Data Acquisition & Pre-Processing
 
 See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape the data.
 
-## Approach 1: RAG
+### Data Ingestion
 
+TODO:
 
+## LLM
 
-
+### Ollama
 
 ```sh
 docker run -d -p 3000:8080 -e OLLAMA_BASE_URL=http://10.7.7.141 -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
 ```
-
-
 
 ## Cosine Similarity in Vector Search
 
@@ -124,8 +127,9 @@ When you get results from similarity_search:
 - Distances around 1 suggest little to no similarity.
 - Distances approaching 2 indicate opposite meanings (rare in practice).
 
+## RAG
 
-
+TODO:
 
 ### Sample Questions
 
@@ -133,7 +137,7 @@ When you get results from similarity_search:
 - Which diseases are prevalent in Kenya?
 - Which were the largest disease outbreaks in the last 20 years?
 - Where were outbreaks with the most severe impacts, e.g. deaths?
--
+
 
 ## References
 
@@ -177,8 +181,6 @@ When you get results from similarity_search:
 - [Systematic review on the application of machine learning to quantitative structure–activity relationship modeling against Plasmodium falciparum](https://link.springer.com/article/10.1007/s11030-022-10380-1)
 - [Predicting malaria outbreaks using earth observation measurements and spatiotemporal deep learning modelling: a South Asian case study from 2000 to 2017](https://www.thelancet.com/journals/lanplh/article/PIIS2542-5196(24)00082-2/fulltext)
 - [New Study uses AI to predict malaria outbreaks in South Asia](https://www.ndorms.ox.ac.uk/news/new-study-uses-ai-to-predict-malaria-outbreaks-in-south-asia)
--
-
 
 ### Technical Articles
 
