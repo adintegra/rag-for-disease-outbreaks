@@ -2,16 +2,18 @@
 
 **How can multi-modal data fusion inform and enhance the prediction and reporting of malaria outbreaks?**
 
+
 - [RAG for Malaria Outbreaks](#rag-for-malaria-outbreaks)
   - [Introduction](#introduction)
   - [Getting Started](#getting-started)
     - [Python Environment](#python-environment)
     - [Database Setup](#database-setup)
+    - [LangChain](#langchain)
   - [Data](#data)
     - [Data Acquisition \& Pre-Processing](#data-acquisition--pre-processing)
     - [Data Ingestion](#data-ingestion)
   - [LLM](#llm)
-    - [Ollama](#ollama)
+    - [Open WebUI (optional)](#open-webui-optional)
   - [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
     - [What is Cosine Similarity?](#what-is-cosine-similarity)
     - [Cosine Distance](#cosine-distance)
@@ -45,10 +47,14 @@ On MacOS you must install a native ARM build if you are running on Apple Silicon
 
 ```sh
 CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
-
-conda env remove --name pg-vector-rag
-
+conda activate pg-vector-rag
 pip install -r requirements.txt
+```
+
+Should you need to remove the environment and start fresh for any reason:
+
+```sh
+conda env remove --name pg-vector-rag
 ```
 
 ### Database Setup
@@ -69,6 +75,10 @@ Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensur
 ```sh
 python create_db.py
 ```
+
+### LangChain
+
+This code uses [LangChain](https://python.langchain.com/docs/introduction/) to abstract away some of the lower-level interactions with our LLMs and data.
 
 At the time of writing (Jan 2025) LangChain is quite far behind in the version of pgvector it supports (v0.2.5 – current version is v0.3.6). There is an open [PR](https://github.com/langchain-ai/langchain-postgres/pull/147) for supporting the new features (especially support for the sparse vector type `halfvec`).
 This version of the code can be installed directly from GitHub:
@@ -91,7 +101,15 @@ TODO:
 
 ## LLM
 
-### Ollama
+[Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g.:
+
+```
+ollama run phi4
+```
+
+By default, Ollama will expose its API on port 11434.
+
+### Open WebUI (optional)
 
 ```sh
 docker run -d -p 3000:8080 -e OLLAMA_BASE_URL=http://10.7.7.141 -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
