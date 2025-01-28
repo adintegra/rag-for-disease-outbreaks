@@ -4,7 +4,6 @@
 
 - [MAS Master Thesis](#mas-master-thesis)
 - [Introduction](#introduction)
-- [Planning](#planning)
 - [Getting Started](#getting-started)
   - [Python Environment](#python-environment)
   - [Database Setup](#database-setup)
@@ -27,20 +26,19 @@
 
 ## Introduction
 
-TODO:
+This repository contains the code for my master's thesis project. It is designed to be self-contained and can be run with or without knowledge of the paper's broader context.
 
-Google Doc: https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms
+The repository contains all required elements for a running RAG application, from data collection, pre-processing through storage, retrieval and generation.
 
-## Planning
-
-TODO: embed a project plan
-
+The corresponding text can be found here: https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms
 
 ## Getting Started
 
 ### Python Environment
 
-On MacOS you must install a native ARM build if you are running on Apple Silicon (Mn processors). Otherwise, Python will default to x86 builds which will run on Rosetta and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
+For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other Python environments.
+
+On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run on Rosetta and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
 
 ```sh
 CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
@@ -52,10 +50,11 @@ pip install -r requirements.txt
 
 ### Database Setup
 
-This project uses the [pgvector](https://github.com/pgvector/pgvector) Postgres extension as a vector store. This allow the data to be stored alongside the embeddings and can be accessed easily through any SQL querying utility.
+This project uses the [pgvector](https://github.com/pgvector/pgvector) Postgres extension as a vector store. This allows the data to be stored alongside the embeddings and as such both can be accessed easily through any SQL querying utility.
+
 If you do not wish to run this locally, a cloud-based service such as [Supabase](https://supabase.com/modules/vector) could also be used.
 
-There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance. **Note:** Please create an empty directory `pgvector_data` before bringing the container up for the first time.
+There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance. **Note:** Please create an empty subdirectory `pgvector_data` before bringing the container up for the first time. This will be mounted as a volume within the Docker container.
 
 ```sh
 mkdir pgvector_data
@@ -77,7 +76,7 @@ pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e3
 
 ## Data Sources
 
-Data source of interest will be found in the [./data](./data/) folder.
+A list of data sources of interest can be found in the [./data](./data/) folder.
 
 ## Data Acquisition
 
