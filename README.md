@@ -42,15 +42,15 @@ The corresponding text can be found in this [Google Doc](https://docs.google.com
 
 ## Getting Started
 
-This RAG application consists of various elements:
+This RAG application consists of various elements. The setup of each is detailed below:
 
 ```mermaid
-flowchart TD
-    A[Data] -->|Ingestion| B(PGVector)
-    B --> C{Let me think}
-    C -->|One| D[Laptop]
-    C -->|Two| E[iPhone]
-    C -->|Three| F[fa:fa-car Car]
+graph TD;
+    A[Frontend UI] --> |Query| B[Embedding Model]
+    B --> |Embedded Query| C[Vector Store]
+    C --> |Retrieved Relevant Documents| D[Enhanced Query with Context]
+    D --> E[LLM]
+    E --> |Generated Response| A
 ```
 
 ### Python Environment
@@ -122,7 +122,7 @@ This will read
 
 ### LLM
 
-This application
+All components of this application can be run locally without accessing resources in the cloud. This includes the language and embedding models.
 
 #### Ollama
 
