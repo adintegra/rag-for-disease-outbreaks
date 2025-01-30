@@ -9,17 +9,20 @@
     - [Python Environment](#python-environment)
     - [Database Setup](#database-setup)
     - [LangChain](#langchain)
-  - [Data](#data)
-    - [Data Acquisition \& Pre-Processing](#data-acquisition--pre-processing)
-    - [Data Ingestion](#data-ingestion)
-  - [LLM](#llm)
-    - [Open WebUI (optional)](#open-webui-optional)
+    - [Data](#data)
+      - [Acquisition \& Pre-Processing](#acquisition--pre-processing)
+      - [Data Ingestion](#data-ingestion)
+    - [LLM](#llm)
+      - [Ollama](#ollama)
+      - [Embeddings](#embeddings)
+      - [Retrieval](#retrieval)
+    - [UI](#ui)
+  - [Evaluation](#evaluation)
+    - [Sample Questions](#sample-questions)
   - [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
     - [What is Cosine Similarity?](#what-is-cosine-similarity)
     - [Cosine Distance](#cosine-distance)
     - [Interpreting Results](#interpreting-results)
-  - [RAG](#rag)
-    - [Sample Questions](#sample-questions)
   - [References](#references)
     - [YouTube](#youtube)
     - [Articles](#articles)
@@ -38,6 +41,17 @@ The repository contains all required elements for a running RAG application, fro
 The corresponding text can be found in this [Google Doc](https://docs.google.com/document/d/1yrXBIel38MnqWNlNvMyZ0F4Ly4uRXjIqJBo9NjEtcms).
 
 ## Getting Started
+
+This RAG application consists of various elements:
+
+```mermaid
+flowchart TD
+    A[Data] -->|Ingestion| B(PGVector)
+    B --> C{Let me think}
+    C -->|One| D[Laptop]
+    C -->|Two| E[iPhone]
+    C -->|Three| F[fa:fa-car Car]
+```
 
 ### Python Environment
 
@@ -63,14 +77,14 @@ This project uses the [pgvector](https://github.com/pgvector/pgvector) Postgres 
 
 If you do not wish to run this locally, a cloud-based service such as [Supabase](https://supabase.com/modules/vector) could also be used.
 
-There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance. **Note:** Please create an empty subdirectory `pgvector_data` before bringing the container up for the first time. This will be mounted as a volume within the Docker container.
+There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance as a [Docker](https://www.docker.com/products/docker-desktop/) container. **Note:** Please create an empty subdirectory `pgvector_data` before bringing the container up for the first time. This will be mounted as a volume within the Docker container.
 
 ```sh
 mkdir pgvector_data
 docker compose up -d
 ```
 
-Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensure you have a `.env` file present (use the provided `.example.env` for guidance) and run:
+Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensure you have a `.env` file present (use the provided [.example.env](./.example.env) for guidance) and run:
 
 ```sh
 python create_db.py
@@ -87,19 +101,30 @@ This version of the code can be installed directly from GitHub:
 pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e37aad615ee3cbd4c6bd4a693a76d
 ```
 
-## Data
+### Data
 
-A list of data sources of interest can be found in the [./data](./data/) folder.
+A list of interesting data sources pertaining to malaria and other tropical diseases can be found in the subfolders under [./data-collectio](./data-collection/). The code in this repo currently uses data scraped from [WHO DONs](./data-collection/acquisition/WHO%20DONs/) to populate our RAG knowledgebase. It should be fairly straightforward to adapt it to other sources.
 
-### Data Acquisition & Pre-Processing
+#### Acquisition & Pre-Processing
 
-See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape the data.
+See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape and clean the data. In this directory, you'll also find a [README](./app/who-don-retriever/README.md) outlining the process.
 
-### Data Ingestion
+#### Data Ingestion
 
-TODO:
+Populate the document store by running:
 
-## LLM
+```sh
+python load_documents.py
+```
+
+This will read
+
+
+### LLM
+
+This application
+
+#### Ollama
 
 [Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g.:
 
@@ -109,11 +134,49 @@ ollama run phi4
 
 By default, Ollama will expose its API on port 11434.
 
-### Open WebUI (optional)
+#### Embeddings
+
+By default, this app uses the [all-MiniLM-L6-v2](https://www.sbert.net/) Sentence Transformer model to generate the embeddings for our vector store. An other model which works well for embeddings is [nomic-embed-text-v1.5](https://www.nomic.ai/blog/posts/nomic-embed-text-v1). Run the following to pull the model into Ollama:
 
 ```sh
-docker run -d -p 3000:8080 -e OLLAMA_BASE_URL=http://10.7.7.141 -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+ollama pull all-minilm
 ```
+
+Once ready, run [./app/db/load_embeddings.py](./app/db/load_embeddings.py):
+
+```sh
+python load_embeddings.py
+```
+
+**Note:** This will take some time to process – expect at least 15 minutes on a modern Mac laptop.
+
+#### Retrieval
+
+TODO:
+
+### UI
+
+If you've made it this far – great! At this point, run the front-end application (from within the [app](./app/) directory):
+
+```sh
+flask run
+```
+
+You should now be able to reach the chat-style interface at http://127.0.0.1:5000.
+
+
+![./app/static/rag-chat-ui](./app/static/rag-chat-ui.png)
+
+
+## Evaluation
+
+### Sample Questions
+
+- In which countries is Malaria most prevalent?
+- Which diseases are prevalent in Kenya?
+- Which were the largest disease outbreaks in the last 20 years?
+- Where were outbreaks with the most severe impacts, e.g. deaths?
+
 
 ## Cosine Similarity in Vector Search
 
@@ -144,17 +207,6 @@ When you get results from similarity_search:
 - Distances closer to 0 indicate high similarity.
 - Distances around 1 suggest little to no similarity.
 - Distances approaching 2 indicate opposite meanings (rare in practice).
-
-## RAG
-
-TODO:
-
-### Sample Questions
-
-- In which countries is Malaria most prevalent?
-- Which diseases are prevalent in Kenya?
-- Which were the largest disease outbreaks in the last 20 years?
-- Where were outbreaks with the most severe impacts, e.g. deaths?
 
 
 ## References
