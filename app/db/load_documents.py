@@ -10,7 +10,7 @@ from vector_store import Document
 
 # Prepare data for insertion
 def prepare_record(row):
-  """Prepare a record for insertion into the vector store."""
+  """Prepare a record for insertion into the database."""
 
   # content = f"Title: {row['Title']}\nSummary: {row['Summary']}"
   # TitleSuffix;Epidemiology
@@ -35,6 +35,7 @@ def prepare_record(row):
 
 
 def upsert(df: pd.DataFrame):
+  """Upsert records into the database."""
   engine = create_engine(os.getenv("CONNECTION_STRING"))
   Session = sessionmaker(bind=engine)
   session = Session()
