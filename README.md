@@ -129,6 +129,10 @@ All components of this application can be run locally without accessing resource
 [Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g.:
 
 ```
+export OLLAMA_HOST=0.0.0.0
+export OLLAMA_KEEP_ALIVE=15m
+export OLLAMA_FLASH_ATTENTION=true
+export OLLAMA_KV_CACHE_TYPE=q8_0
 ollama run phi4
 ```
 
