@@ -3,6 +3,9 @@ import pandas as pd
 import json
 import re
 import requests
+from bs4 import BeautifulSoup
+import warnings
+from bs4 import MarkupResemblesLocatorWarning
 
 
 def remove_tags(string):
@@ -35,6 +38,28 @@ def remove_tags(string):
   return result.strip()
 
 
+def remove_tags_bs(string):
+  """
+  Remove HTML tags and specific HTML entities from a given string. It also removes single and double quotes, and other
+  specific HTML entities. Uses BeatifulSoup to parse the HTML.
+  Args:
+    string (str): The input string containing HTML tags and entities.
+  Returns:
+    str: The cleaned string with HTML tags and entities removed.
+  """
+  warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+
+  soup = BeautifulSoup(string, "html.parser")
+  soup = soup.get_text(strip=True)
+  # soup = soup.lower()
+
+  soup = re.sub(r"[\n\r]+", " ", soup)
+  soup = re.sub(r";", "", soup)
+  soup = re.sub(r'"', "", soup)
+
+  return soup
+
+
 def load_json():
   """
   Load data from a JSON file, normalize it into a pandas DataFrame, clean the data, and save it to a CSV file.
@@ -64,11 +89,10 @@ def load_json():
         "EmergencyEvent.IncludeInSitemap",
         "EmergencyEvent.SystemSourceKey",
         "EmergencyEvent.UrlName",
+        "EmergencyEvent.Title",
         "EmergencyEvent.ItemDefaultUrl",
         "EmergencyEvent.healthtopics",
-        "EmergencyEvent.Title",
         "EmergencyEvent.EventId",
-        "EmergencyEvent.EmergencyEventStartDate",
         "EmergencyEvent.healthtopictypes",
         "EmergencyEvent.Provider",
         "EmergencyEvent",
@@ -78,14 +102,18 @@ def load_json():
 
     # Clean up the data
     df["Summary"] = df["Summary"].fillna("").apply(str)
+    df["Title"] = df["Title"].fillna("").apply(str)
+    df["TitleSuffix"] = df["TitleSuffix"].fillna("").apply(str)
     df["Epidemiology"] = df["Epidemiology"].fillna("").apply(str)
     df["Assessment"] = df["Assessment"].fillna("").apply(str)
     df["Overview"] = df["Overview"].fillna("").apply(str)
 
-    df["Summary"] = df["Summary"].apply(lambda cw: remove_tags(cw))
-    df["Epidemiology"] = df["Epidemiology"].apply(lambda cw: remove_tags(cw))
-    df["Assessment"] = df["Assessment"].apply(lambda cw: remove_tags(cw))
-    df["Overview"] = df["Overview"].apply(lambda cw: remove_tags(cw))
+    df["Summary"] = df["Summary"].apply(lambda cw: remove_tags_bs(cw))
+    df["Title"] = df["Title"].apply(lambda cw: remove_tags_bs(cw))
+    df["TitleSuffix"] = df["TitleSuffix"].apply(lambda cw: remove_tags_bs(cw))
+    df["Epidemiology"] = df["Epidemiology"].apply(lambda cw: remove_tags_bs(cw))
+    df["Assessment"] = df["Assessment"].apply(lambda cw: remove_tags_bs(cw))
+    df["Overview"] = df["Overview"].apply(lambda cw: remove_tags_bs(cw))
 
     df["Url"] = df["UrlName"].apply(
       lambda x: f"https://www.who.int/emergencies/disease-outbreak-news/item/{x}"

@@ -85,8 +85,8 @@ pgvector_data/
 # Exclude trained models
 /models/
 
-# exclude data from source control by default
-# /data/
+# Exclude backup files
+/bak
 
 # Ruff cache
 .ruff_cache/

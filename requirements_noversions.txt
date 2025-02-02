@@ -16,3 +16,5 @@ langchain_experimental
 tqdm
 matplotlib
 flask-sqlalchemy
+rank_bm25
+beautifulsoup4
