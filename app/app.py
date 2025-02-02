@@ -1,54 +1,46 @@
-from flask import Flask, render_template, request, jsonify
-from langchain.vectorstores import PGVector
-import os
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from flask import Flask, render_template, request, jsonify, g
+from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
-
-# from langchain_postgres import PGVector
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import os
+import time
+from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from sqlalchemy import select
 from db.vector_store import Document, Embedding
 
-# from pgvector.sqlalchemy import Vector
-from sqlalchemy import select
 
+load_dotenv("../.env")
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("CONNECTION_STRING") + "/postgres"
+app.config["SQLALCHEMY_POOL_SIZE"] = 10  # Set the pool size
+app.config["SQLALCHEMY_MAX_OVERFLOW"] = 5  # Allow additional connections
 
-# Initialize the embedding model and vector store
-load_dotenv("../.env")
-embeddings = OllamaEmbeddings(model="all-minilm", base_url=os.getenv("OLLAMA_BASE_URL"))
+db = SQLAlchemy(app)
+
+# Initialize the embedding models and vector store
+bert_embeddings = OllamaEmbeddings(
+  model="all-minilm", base_url=os.getenv("OLLAMA_BASE_URL")
+)
+nomic_embeddings = OllamaEmbeddings(
+  model="nomic-text-embed-v1.5", base_url=os.getenv("OLLAMA_BASE_URL")
+)
+embeddings = bert_embeddings
+
+llm = OllamaLLM(model=os.getenv("LLM"), base_url=os.getenv("OLLAMA_BASE_URL"))
 # llm = OllamaLLM(
 #   model="llama3.2", base_url=os.getenv("OLLAMA_BASE_URL"), temperature=0.5
 # )
-llm = OllamaLLM(model="phi4", base_url=os.getenv("OLLAMA_BASE_URL"))
-
-vector_store = None
-
-# PostgreSQL connection settings
-CONNECTION_STRING = "postgresql+psycopg://postgres:password@localhost:5432"
-COLLECTION_NAME = "embedding"  # Replace with your collection name
-
-
-def init_vector_store():
-  global vector_store
-  if vector_store is None:
-    # Initialize PGVector
-    vector_store = PGVector(
-      connection_string=CONNECTION_STRING,
-      embedding_function=embeddings,
-      collection_name=COLLECTION_NAME,
-    )
 
 
 def similarity_search(query):
   """Search for documents directly using pgvector."""
-  # langchain_search(query)
+  g.search_starttime = time.time()
+  app.logger.info(f"{time.time() - g.search_starttime}s: Embedding query vector...")
+  app.logger.info(f"Using model: {embeddings.model}")
+
   query_vector = embeddings.embed_query(query)
 
-  engine = create_engine(CONNECTION_STRING)
-  Session = sessionmaker(bind=engine)
-  session = Session()
+  app.logger.info(f"{time.time() - g.search_starttime}s: Querying vector store...")
 
   # See https://github.com/pgvector/pgvector-python?tab=readme-ov-file#sqlalchemy
   # l2_distance also works
@@ -60,18 +52,16 @@ def similarity_search(query):
       Embedding.embedding_384.cosine_distance(query_vector).label("l2_distance"),
     )
     .join(Embedding)
-    .filter(Embedding.model == "all-minilm")
+    .filter(Embedding.model == embeddings.model)
     .order_by(Embedding.embedding_384.cosine_distance(query_vector))
     .limit(5)
   )
 
-  # print(stmt)
-  # retrieved_docs = session.execute(stmt).scalars().all()
-  retrieved_docs = session.execute(stmt).all()
+  retrieved_docs = db.session.execute(stmt).all()
 
-  # if len(retrieved_docs) == 0:
-  #   print("No documents found.")
-  #   return
+  if len(retrieved_docs) == 0:
+    raise ValueError("No documents found.")
+
   # else:
   #   print(f"Number of documents retrieved: {len(retrieved_docs)}")
   #   # for doc in retrieved_docs:
@@ -79,7 +69,20 @@ def similarity_search(query):
   #   #   print(f"URL: {doc.url}")
   #   #   print(f"Similarity: {doc.l2_distance}")
 
-  session.close()
+  app.logger.info(f"{time.time() - g.search_starttime}s: Querying LLM...")
+
+  #  Query the LLM model to generate a response
+  formatted_response = query_llm(retrieved_docs, query)
+
+  app.logger.info(
+    f"{time.time() - g.pop('search_starttime', None)}s: Sending response to browser..."
+  )
+
+  return formatted_response
+
+
+def query_llm(docs, query):
+  """Formulate an LLM prompt providing context from our knowledgebase."""
 
   # Create a prompt that combines the query and retrieved documents
   prompt_text = f"""Answer the following question based on the provided context:
@@ -88,7 +91,7 @@ Question: {query}
 
 Context:
 """
-  for doc in retrieved_docs:
+  for doc in docs:
     prompt_text += f"\n{doc.contents}\n"
 
   prompt_text += "\nAnswer:"
@@ -98,12 +101,24 @@ Context:
   formatted_response = response
   formatted_response += "<br /><br />- - - - - - - - - - - -<br />Here are the retrieved documents most relevant to the query:<br /><br />"
 
-  for doc in retrieved_docs:
+  for doc in docs:
     formatted_response += f"<a href='{doc.url}' target='_blank'>Document</a>"
     formatted_response += f"<p>Cosine Similarity: {doc.l2_distance}</p>"
     formatted_response += f"<p>Content: {doc.contents[:350]}...</p>"
 
   return formatted_response
+
+
+@app.before_request
+def log_route_start():
+  g.start_time = time.time()
+
+
+@app.after_request
+def log_route_end(response):
+  route = request.endpoint
+  print(f"{route} processed in {time.time() - g.pop('start_time', None)}s")
+  return response
 
 
 @app.route("/")
@@ -119,9 +134,6 @@ def search():
 
     if not query:
       return jsonify({"error": "No query provided"}), 400
-
-    # Initialize vector store if not already done
-    # init_vector_store()
 
     # Perform similarity search
     docs = similarity_search(query)
