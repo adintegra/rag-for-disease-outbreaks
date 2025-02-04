@@ -36,6 +36,13 @@ def create_tables():
       )
     )
 
+  with engine.begin() as connection:
+    connection.execute(
+      text(
+        "CREATE INDEX IF NOT EXISTS idx_embedding_1024 ON embedding USING hnsw (embedding_1024 halfvec_l2_ops) WITH (m = 16, ef_construction = 128)"
+      )
+    )
+
 
 def create_view():
   engine = create_engine(os.getenv("CONNECTION_STRING"))
@@ -46,15 +53,20 @@ def create_view():
         """
         CREATE OR REPLACE VIEW v_doc_embedding AS
         SELECT
-          d.id AS document_id,
+          e.id,
+          e.document_id,
+          e.chunk_id,
+          e.model,
           d.meta,
           d.contents,
           d.url,
           d.published_at,
-          e.id AS embedding_id,
-          e.chunk_id,
-          e.model,
-          e.embedding_8192 AS embedding
+          CASE
+          WHEN model = 'nomic-embed-text-v1.5' THEN e.embedding_768
+          WHEN model = 'all-minilm' THEN e.embedding_384
+          WHEN model = 'mxbai-embed-large' THEN e.embedding_1024
+          ELSE e.embedding_768
+          END AS embedding
         FROM
           document d
         JOIN
