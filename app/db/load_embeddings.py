@@ -7,17 +7,40 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_experimental.text_splitter import SemanticChunker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 from langchain_nomic import NomicEmbeddings
 from langchain_ollama import OllamaEmbeddings
-
-# from langchain_core.documents import Document
-from langchain_postgres import PGVector
-from langchain_postgres.vectorstores import PGVector
 from vector_store import Document, Embedding
 
 
-MODEL = "all-minilm"
+# Run this script to generate embeddings for all documents in the database
+# MODEL = "all-minilm"  # dim 384 / context window 512
+MODEL = "nomic-embed-text"  # dim 768 / context window 2048
+# MODEL = "mxbai-embed-large"  # dim 1024 / context window 512
+
+embeddings = ""
+
+
+class EmbeddingModel:
+  def __init__(self, name=MODEL):
+    self.name = MODEL
+    self.dims = (
+      384
+      if name == "all-minilm"
+      else 768
+      if name == "nomic-embed-text"
+      else 1024
+      if name == "mxbai-embed-large"
+      else 0
+    )
+    self.ctx = (
+      512
+      if name == "all-minilm"
+      else 2048
+      if name == "nomic-embed-text"
+      else 512
+      if name == "mxbai-embed-large"
+      else 0
+    )
 
 
 def clean_db():
@@ -35,27 +58,11 @@ def clean_db():
     session.close()
 
 
-def init_llm():
+def init_llm(model):
   """Initialize the LLM model."""
-
-  # embeddings = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
-
-  if MODEL == "llama":
-    # global VECTOR_DIMENSIONS
-    # VECTOR_DIMENSIONS = 3072
-    return OllamaEmbeddings(model="llama3.2")
-
-  elif MODEL == "nomic":
-    # global VECTOR_DIMENSIONS
-    # VECTOR_DIMENSIONS = 768
-    # return NomicEmbeddings(
-    #   model="nomic-embed-text-v1.5", inference_mode="local", device="gpu"
-    return OllamaEmbeddings(
-      model="nomic-embed-text", base_url=os.getenv("OLLAMA_BASE_URL")
-    )
-
-  elif MODEL == "all-minilm":
-    return OllamaEmbeddings(model="all-minilm", base_url=os.getenv("OLLAMA_BASE_URL"))
+  return OllamaEmbeddings(
+    model=model.name, base_url=os.getenv("OLLAMA_BASE_URL"), num_ctx=model.ctx
+  )
 
 
 def get_embedding(content):
@@ -75,59 +82,56 @@ def process_and_store_embeddings():
   # Retrieve all documents
   documents = session.query(Document).all()
 
+  llm = EmbeddingModel()
+
   # Initialize text splitter
   # fixed chunk size, not really useful
   # text_splitter = RecursiveCharacterTextSplitter(
   #   chunk_size=1000, chunk_overlap=200, add_start_index=True
   # )
-
-  text_splitter = SemanticChunker(
-    NomicEmbeddings(model="nomic-embed-text-v1.5", inference_mode="local", device="gpu")
-  )
+  # text_splitter = SemanticChunker(
+  #   NomicEmbeddings(model="nomic-embed-text-v1.5", inference_mode="local", device="gpu")
+  # )
 
   with tqdm(total=len(documents), desc="Embedding documents") as pbar:
     for document in documents:
       # Split the text into chunks
-      chunks = text_splitter.create_documents([document.contents])
+      # chunks = text_splitter.create_documents([document.contents])
 
-      if MODEL == "llama":
-        for chunk_id, chunk in enumerate(chunks):
-          # Get the embedding for each chunk
-          embedding = get_embedding(chunk.page_content)
+      # if MODEL == "llama":
+      #   for chunk_id, chunk in enumerate(chunks):
+      #     # Get the embedding for each chunk
+      #     embedding = get_embedding(chunk.page_content)
 
-          # Create an Embedding record
-          embedding_record = Embedding(
-            document_id=document.id,
-            chunk_id=chunk_id,
-            model=MODEL,
-            embedding_256=None,
-            embedding_512=None,
-            embedding_768=embedding[0],
-            embedding_1536=None,
-            embedding_3072=None,
-            embedding_4096=None,
-            embedding_8192=None,
-          )
+      #     # Create an Embedding record
+      #     embedding_record = Embedding(
+      #       document_id=document.id,
+      #       chunk_id=chunk_id,
+      #       model=MODEL,
+      #       embedding_256=None,
+      #       embedding_512=None,
+      #       embedding_768=embedding[0],
+      #       embedding_1536=None,
+      #       embedding_3072=None,
+      #       embedding_4096=None,
+      #       embedding_8192=None,
+      #     )
 
-          # Add the embedding record to the session
-          session.add(embedding_record)
+      #     # Add the embedding record to the session
+      #     session.add(embedding_record)
 
-        # Commit for every document
-        session.commit()
+      #   # Commit for every document
+      #   session.commit()
 
-      elif MODEL == "nomic":
-        # Nomic has a context window of 8192 tokens, our max doc size is around 5000 (no chunking)
+      if llm.dims == 768:
         # Time: about 15mins
         embedding = get_embedding(document.contents)
-
-        # print(document.contents)
-        # print(embedding.shape)
 
         # Create an Embedding record
         embedding_record = Embedding(
           document_id=document.id,
           chunk_id=0,
-          model=MODEL,
+          model=llm.name,
           embedding_256=None,
           embedding_512=None,
           embedding_768=embedding,
@@ -140,11 +144,7 @@ def process_and_store_embeddings():
         # Add the embedding record to the session
         session.add(embedding_record)
 
-        # Commit for every document
-        session.commit()
-
-      elif MODEL == "all-minilm":
-        # Context window of 256 tokens, our max doc size is around 5000 (no chunking)
+      elif llm.dims == 384:
         embedding = get_embedding(document.contents)
 
         # print(document.contents)
@@ -154,7 +154,7 @@ def process_and_store_embeddings():
         embedding_record = Embedding(
           document_id=document.id,
           chunk_id=0,
-          model=MODEL,
+          model=llm.name,
           embedding_256=None,
           embedding_384=embedding,
           embedding_512=None,
@@ -168,9 +168,8 @@ def process_and_store_embeddings():
         # Add the embedding record to the session
         session.add(embedding_record)
 
-        # Commit for every document
-        session.commit()
-
+      # Commit for every document
+      session.commit()
       pbar.update(1)
 
   # Close the session cleanly
@@ -179,6 +178,12 @@ def process_and_store_embeddings():
 
 def main():
   load_dotenv("../../.env")
+
+  # Initialize the model
+  em = EmbeddingModel(MODEL)
+
+  global embeddings
+  embeddings = init_llm(em)
 
   # Logging – conflicts with tqdm
   if os.getenv("LOGS"):
@@ -192,6 +197,4 @@ def main():
 
 ## ------------------------------------------------------
 if __name__ == "__main__":
-  # Initialize the model
-  embeddings = init_llm()
   main()
