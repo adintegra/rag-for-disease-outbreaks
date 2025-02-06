@@ -1,0 +1,119 @@
+**General Questions About Disease Outbreaks:**
+1. What are the most common diseases reported in the dataset?
+2. Which countries have experienced the highest number of outbreaks?
+3. What are the primary transmission modes of the diseases covered?
+4. Which disease has had the highest mortality rate in the dataset?
+5. How do outbreak frequencies vary across different continents?
+6. What are the common symptoms associated with these diseases?
+7. Which outbreaks have led to global health emergencies?
+8. How do these diseases impact different age groups?
+9. Which environmental factors contribute to these outbreaks?
+10. What are the trends in outbreaks over the years?
+
+**Disease-Specific Questions:**
+11. What are the primary symptoms of Avian Influenza?
+12. How is MERS-CoV transmitted between humans?
+13. What containment measures have been used for Ebola outbreaks?
+14. Which countries have reported the most cases of Cholera?
+15. How does the Zika virus affect pregnant women?
+16. What treatments are available for Yellow Fever?
+17. What are the long-term effects of contracting Marburg virus disease?
+18. How has the response to MERS-CoV evolved over time?
+19. What is the incubation period for Lassa Fever?
+20. How does climate change impact Malaria outbreaks?
+
+**Geographical Analysis:**
+21. Which regions have reported the highest number of Ebola outbreaks?
+22. How has Avian Influenza spread across different continents?
+23. What are the common factors in countries affected by Cholera?
+24. How frequently has Saudi Arabia reported MERS-CoV cases?
+25. What is the relationship between urbanization and outbreak frequency?
+26. Which country has reported the highest number of Yellow Fever cases?
+27. How do outbreaks in tropical regions compare to those in temperate regions?
+28. What are the major factors contributing to disease spread in refugee camps?
+29. Which African countries report the most frequent disease outbreaks?
+30. How do travel restrictions impact the spread of outbreaks?
+
+**Public Health Response Questions:**
+31. What vaccination campaigns have been launched in response to these diseases?
+32. How effective have quarantine measures been in containing outbreaks?
+33. What role does WHO play in managing disease outbreaks?
+34. What are the key challenges in providing medical aid to affected areas?
+35. How do different governments handle outbreak containment?
+36. What are the funding sources for outbreak response efforts?
+37. How do public awareness campaigns influence outbreak containment?
+38. What protective measures are recommended for healthcare workers?
+39. How do border control measures impact disease spread?
+40. What technological advancements have improved outbreak detection?
+
+**Temporal Trends:**
+41. Are there seasonal patterns in disease outbreaks?
+42. How has the frequency of disease outbreaks changed over the last decade?
+43. Which years had the highest number of reported outbreaks?
+44. How do outbreak trends compare between the 1990s and 2020s?
+45. What are the most frequently occurring diseases in the last five years?
+46. How do pandemics influence the reporting of smaller outbreaks?
+47. How does disease reporting frequency change during major pandemics?
+48. What are the common causes of recurring outbreaks?
+49. What lessons were learned from past disease outbreaks?
+50. How do outbreak trends compare before and after COVID-19?
+
+**Socioeconomic Impact:**
+51. What are the economic impacts of major outbreaks?
+52. How do disease outbreaks affect food security?
+53. How do tourism industries react to outbreak reports?
+54. What are the long-term societal effects of repeated disease outbreaks?
+55. How do outbreaks impact local healthcare infrastructure?
+56. What financial burdens do outbreaks place on affected countries?
+57. How do outbreaks affect educational systems in affected areas?
+58. What role does misinformation play in exacerbating outbreaks?
+59. How do public trust levels in healthcare systems change during outbreaks?
+60. How do outbreaks impact mental health in affected populations?
+
+**Preventive Measures and Treatments:**
+61. What are the most effective preventive measures for Ebola?
+62. How do countries prepare for potential future outbreaks?
+63. What new treatments have been developed for infectious diseases?
+64. How do vaccines contribute to reducing outbreak severity?
+65. What role does personal hygiene play in outbreak prevention?
+66. How effective are insecticide-treated nets in reducing Malaria cases?
+67. What dietary recommendations help in preventing foodborne outbreaks?
+68. How do mask mandates affect the spread of airborne diseases?
+69. What strategies are in place for rapid outbreak detection?
+70. What global collaborations exist for outbreak preparedness?
+
+**Policy and Governance Questions:**
+71. How do international health regulations impact outbreak response?
+72. What policies are in place to monitor and report disease outbreaks?
+73. How do governments coordinate with WHO during outbreaks?
+74. What are the legal frameworks for enforcing quarantines?
+75. How do national pandemic preparedness plans differ globally?
+76. How do public health agencies ensure the accuracy of outbreak data?
+77. What role do non-governmental organizations play in outbreak response?
+78. How do outbreak response policies differ between high- and low-income countries?
+79. How do data-sharing agreements affect global outbreak tracking?
+80. How do political instabilities impact outbreak containment efforts?
+
+**Future Directions and Innovations:**
+81. What role does artificial intelligence play in outbreak prediction?
+82. How do climate change models predict future outbreak risks?
+83. What emerging infectious diseases pose the greatest future risks?
+84. How do advancements in genomic sequencing aid outbreak investigations?
+85. What are the potential risks of zoonotic disease transmission in urban areas?
+86. How can mobile technology improve real-time outbreak monitoring?
+87. What role do social media platforms play in tracking outbreak reports?
+88. How do predictive analytics help in early outbreak detection?
+89. What improvements are needed in disease surveillance systems?
+90. How do space-based technologies assist in monitoring outbreaks?
+
+**Miscellaneous Questions:**
+91. How do travel advisories impact global movement during outbreaks?
+92. What are the ethical concerns in conducting outbreak-related research?
+93. How do media narratives shape public perception of disease outbreaks?
+94. What role do cultural practices play in disease transmission?
+95. How do supply chain disruptions affect outbreak response efforts?
+96. How do religious gatherings contribute to disease spread?
+97. How do large-scale events adapt to minimize outbreak risks?
+98. How do personal protective equipment (PPE) shortages impact healthcare workers?
+99. How do antimicrobial resistance trends affect outbreak management?
+100. What strategies help in combating vaccine hesitancy in outbreak-prone regions?
