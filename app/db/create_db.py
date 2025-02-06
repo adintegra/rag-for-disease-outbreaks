@@ -25,7 +25,7 @@ def create_tables():
     connection.execute(
       text(
         # f"CREATE INDEX IF NOT EXISTS idx_{COLLECTION_NAME}_embedding ON {COLLECTION_NAME} USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)"
-        "CREATE INDEX IF NOT EXISTS idx_embedding_3072 ON embedding USING hnsw (embedding_3072 halfvec_l2_ops) WITH (m = 16, ef_construction = 128)"
+        "CREATE INDEX IF NOT EXISTS idx_embedding_384 ON embedding USING hnsw (embedding_384 halfvec_l2_ops) WITH (m = 16, ef_construction = 128)"
       )
     )
 
@@ -53,14 +53,16 @@ def create_view():
         """
         CREATE OR REPLACE VIEW v_doc_embedding AS
         SELECT
-          e.id,
-          e.document_id,
+          d.id AS document_id,
+          e.id AS embedding_id,
           e.chunk_id,
           e.model,
           d.meta,
           d.contents,
           d.url,
           d.published_at,
+          d.summary,
+          d.batch,
           CASE
           WHEN model = 'nomic-embed-text-v1.5' THEN e.embedding_768
           WHEN model = 'all-minilm' THEN e.embedding_384
@@ -82,6 +84,7 @@ def clean_db():
   engine = create_engine(os.getenv("CONNECTION_STRING"))
   # Base.metadata.drop_all(engine)
   with engine.begin() as connection:
+    connection.execute(text("DROP VIEW IF EXISTS v_doc_embedding;"))
     connection.execute(text("DROP TABLE IF EXISTS embedding CASCADE;"))
     connection.execute(text("DROP TABLE IF EXISTS document CASCADE;"))
 
