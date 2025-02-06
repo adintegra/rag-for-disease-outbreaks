@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from rank_bm25 import BM25Okapi
 from langchain_ollama import OllamaEmbeddings
-from db.vector_store import Document, Embedding
+from db.vector_store import DocEmbeddingView
 from sklearn.metrics import precision_score, recall_score
 
 
@@ -27,13 +27,14 @@ def pgvector_retrieve(query):
   # l2_distance also works
   stmt = (
     select(
-      Document.id,
-      Document.contents,
-      Embedding.embedding_384.cosine_distance(query_vector).label("l2_distance"),
+      DocEmbeddingView.document_id,
+      DocEmbeddingView.embedding_id,
+      DocEmbeddingView.chunk_id,
+      DocEmbeddingView.contents,
+      DocEmbeddingView.embedding.cosine_distance(query_vector).label("l2_distance"),
     )
-    .join(Embedding)
-    .filter(Embedding.model == model.model)
-    .order_by(Embedding.embedding_384.cosine_distance(query_vector))
+    .filter(DocEmbeddingView.model == model.model)
+    .order_by(DocEmbeddingView.embedding.cosine_distance(query_vector))
     .limit(5)
   )
 
