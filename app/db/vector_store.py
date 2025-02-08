@@ -66,23 +66,22 @@ class Embedding(Base):
     return "<id {}>".format(self.id)
 
 
-# class DocEmbeddingView(Base):
-#   __tablename__ = "v_doc_embedding"
+class DocEmbeddingView(Base):
+  __tablename__ = "v_doc_embedding"
 
-#   document_id = Column(Integer, primary_key=True)
-#   embedding_id = Column(Integer, primary_key=True)
-#   chunk_id = Column(Integer)
-#   model = Column(Text)
-#   meta = Column(JSON)
-#   contents = Column(Text)
-#   url = Column(Text)
-#   published_at = Column(DateTime)
-#   embedding = Column(HALFVEC)
+  document_id = Column(Integer, primary_key=True)
+  embedding_id = Column(Integer, primary_key=True)
+  chunk_id = Column(Integer)
+  model = Column(Text)
+  meta = Column(JSON)
+  contents = Column(Text)
+  url = Column(Text)
+  published_at = Column(DateTime)
+  summary = Column(Text)
+  batch = Column(Integer)
+  embedding = Column(HALFVEC)
 
-#   __table_args__ = {"extend_existing": True}
+  __table_args__ = {"extend_existing": True}
 
-#   def __init__(self):
-#     pass
-
-#   def __repr__(self):
-#     return "<id {}>".format(self.id)
+  def __repr__(self):
+    return "<id {}>".format(self.id)
