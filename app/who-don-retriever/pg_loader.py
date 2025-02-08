@@ -6,12 +6,13 @@ import requests
 from bs4 import BeautifulSoup
 import warnings
 from bs4 import MarkupResemblesLocatorWarning
+from markdownify import MarkdownConverter
 
 
 def remove_tags(string):
   """
   Remove HTML tags and specific HTML entities from a given string. It also removes single and double quotes, and other
-  specific HTML entities.
+  specific HTML entities. Note: This is a simplistic implementation and was later replaced by remove_tags_bs().
   Args:
     string (str): The input string containing HTML tags and entities.
   Returns:
@@ -38,6 +39,10 @@ def remove_tags(string):
   return result.strip()
 
 
+def md(soup, **options):
+  return MarkdownConverter(**options).convert_soup(soup)
+
+
 def remove_tags_bs(string):
   """
   Remove HTML tags and specific HTML entities from a given string. It also removes single and double quotes, and other
@@ -50,12 +55,18 @@ def remove_tags_bs(string):
   warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
   soup = BeautifulSoup(string, "html.parser")
-  soup = soup.get_text(strip=True)
-  # soup = soup.lower()
 
-  soup = re.sub(r"[\n\r]+", " ", soup)
-  soup = re.sub(r";", "", soup)
+  # Convert to Markdown
+  soup = md(soup, newline_style="BACKSLASH", table_infer_header=True)
+  # soup = re.sub(r"[\n\r]+", r"\n", soup)
+  soup = re.sub(r";", ":", soup)
   soup = re.sub(r'"', "", soup)
+
+  # Alternatively, extract just the text
+  # soup = soup.get_text(strip=True)
+  # soup = re.sub(r"[\n\r]+", " ", soup)
+  # soup = re.sub(r";", "", soup)
+  # soup = re.sub(r'"', "", soup)
 
   return soup
 
@@ -120,7 +131,7 @@ def load_json():
     )
 
     # print(df.head())
-    df.to_csv("dons.csv", sep=";", index=False)
+    df.to_csv("dons_md.csv", sep=";", index=False)
 
 
 def retrieve_dons():

@@ -109,6 +109,12 @@ A list of interesting data sources pertaining to malaria and other tropical dise
 
 See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape and clean the data. In this directory, you'll also find a [README](./app/who-don-retriever/README.md) outlining the process.
 
+**Note:** At the time of writing, a non-packaged version of the Markdownify library must be installed:
+
+```sh
+pip install git+https://github.com/matthewwithanm/python-markdownify@3026602686f9a77ba0b2e0f6e0cbd42daea978f5
+```
+
 #### Data Ingestion
 
 Populate the document store by running:

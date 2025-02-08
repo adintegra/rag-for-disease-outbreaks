@@ -9,6 +9,7 @@ langchain-huggingface
 langchain-nomic
 langchain_experimental
 langchain_ollama
+markdownify
 matplotlib
 nomic[local]
 numpy
