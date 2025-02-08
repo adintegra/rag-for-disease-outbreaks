@@ -14,7 +14,13 @@ def create_tables():
   session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
   session.commit()
 
-  Base.metadata.create_all(engine)
+  # Base.metadata.create_all(engine)
+
+  # Create only Document and Embedding tables
+  Base.metadata.tables = {
+    "document": Base.metadata.tables["document"],
+    "embedding": Base.metadata.tables["embedding"],
+  }
 
   Document.embedding = relationship(
     "Embedding", order_by=Embedding.id, back_populates="document"
