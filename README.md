@@ -136,7 +136,16 @@ export OLLAMA_KV_CACHE_TYPE=q8_0
 ollama run phi4
 ```
 
-By default, Ollama will expose its API on port 11434.
+By default, Ollama will expose its API on port 11434. Also, by default, Ollama will limit its context window to 2048 tokens. This is too low for our use case. Therefore, we should adjust it before running our model or simply create our own version with an expanded context window:
+
+```
+...
+>>> /set parameter num_ctx 16768
+>>> /save bla
+>>> /bye
+...
+```
+
 
 #### Embeddings
 
