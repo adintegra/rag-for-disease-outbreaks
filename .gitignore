@@ -90,3 +90,6 @@ pgvector_data/
 
 # Ruff cache
 .ruff_cache/
+
+# Gradio cache
+.gradio
