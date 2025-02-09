@@ -68,6 +68,7 @@ def create_view():
           d.url,
           d.published_at,
           d.summary,
+          d.event_date,
           d.batch,
           CASE
           WHEN model = 'nomic-embed-text-v1.5' THEN e.embedding_768

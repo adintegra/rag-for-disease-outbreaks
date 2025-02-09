@@ -12,9 +12,11 @@ from langchain_ollama import OllamaEmbeddings
 from vector_store import Document, Embedding
 
 
+BATCH = 1
+
 # Run this script to generate embeddings for all documents in the database
-# MODEL = "all-minilm"  # dim 384 / context window 512
-MODEL = "nomic-embed-text"  # dim 768 / context window 2048
+MODEL = "all-minilm"  # dim 384 / context window 512
+# MODEL = "nomic-embed-text"  # dim 768 / context window 2048
 # MODEL = "mxbai-embed-large"  # dim 1024 / context window 512
 
 embeddings = ""
@@ -80,7 +82,7 @@ def process_and_store_embeddings():
   session = Session()
 
   # Retrieve all documents
-  documents = session.query(Document).all()
+  documents = session.query(Document).filter(Document.batch == BATCH).all()
 
   llm = EmbeddingModel()
 

@@ -2,16 +2,22 @@ from dotenv import load_dotenv
 import os
 import logging
 from datetime import datetime
+from tqdm import tqdm
 import re
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from vector_store import Document
 from langchain_ollama import OllamaLLM, ChatOllama
-from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
 import boto3
 from botocore.exceptions import ClientError
 import json
+
+# Set the batch number
+BATCH = 1
+
 
 # Prepare data for insertion
 def prepare_record(row):
@@ -36,6 +42,8 @@ def prepare_record(row):
   content += f"\nEpidemiology: {epidemiology}" if epidemiology != "" else ""
   content += f"\nAssessment: {assessment}" if assessment != "" else ""
   content += f"\nOverview: {overview}" if overview != "" else ""
+
+  # Remove the leading newline character
   content = re.sub(r"^[\n\r]+", "", content)
 
   published = datetime.strptime(
@@ -68,7 +76,7 @@ def prepare_record(row):
       "url": row["Url"],
       "published_at": published,
       "summary": "",
-      "batch": 0,
+      "batch": BATCH,
     }
   )
 
@@ -95,39 +103,60 @@ def summarize_documents():
   Session = sessionmaker(bind=engine)
   session = Session()
 
-  # Initialize Ollama LLM
-  llm = OllamaLLM(
-    model=os.getenv("LLM"),
-    base_url=os.getenv("OLLAMA_BASE_URL"),
-    num_ctx=12000,
-    temperature=0.5,
+  # Initialize OpenAI
+  # model_name="gpt-3.5-turbo",
+  llm = ChatOpenAI(
+    model_name="gpt-4o-mini",
+    temperature=0,
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
   )
-  # llm = ChatOllama(
-  #   model=os.getenv("LLM"), base_url=os.getenv("OLLAMA_BASE_URL"), num_ctx=12000
+
+  # Initialize Ollama LLM
+  # llm = OllamaLLM(
+  #   model=os.getenv("LLM"),
+  #   base_url=os.getenv("OLLAMA_BASE_URL"),
+  #   num_ctx=16768,
+  #   temperature=0.5,
   # )
 
   # Create prompt template
   prompt_template = PromptTemplate(
-    input_variables=["text"],
-    template="Summarize the following text in no more than 500 words. Don't repeat yourself. Just provide an answer: {text}",
+    input_variables=["document"],
+    template="Summarize the following Markdown content in no more than 500 words. Don't repeat yourself. If specific diseases, dates, timeframes, or geographic locations are mentioned, ensure this information is in the summary. Summarize table content if there is any. Provide your answer as unformatted text: {document}",
   )
+
+  # prompt_template = ChatPromptTemplate(
+  #   [
+  #     (
+  #       "ai",
+  #       "You are a helpful assistant that summarizes Markdown documents in less than 200 words.",
+  #     ),
+  #     (
+  #       "human",
+  #       "Summarize the following Markdown content in no more than 200 words. Don't repeat yourself. If specific diseases, dates, or geographic locations are mentioned, ensure this information is in the summary. Provide your answer as unformatted text: {document}",
+  #     ),
+  #   ]
+  # )
 
   try:
     # Get all documents without summaries
-    documents = session.query(Document).filter(Document.summary == "").all()
+    documents = session.query(Document).filter(Document.batch == BATCH).all()
 
-    for doc in documents:
-      try:
-        # Generate summary
-        prompt = prompt_template.format(text=doc.contents)
-        summary = llm.predict(prompt).strip()
-        doc.summary = summary
-        session.add(doc)
-      except Exception as e:
-        logging.error(f"Error processing document {doc.id}: {str(e)}")
-        continue
+    with tqdm(total=len(documents), desc="Summarising documents") as pbar:
+      for doc in documents:
+        try:
+          # Generate summary
+          prompt = prompt_template.format(document=doc.contents)
+          summary = llm.predict(prompt).strip()
+          doc.summary = summary
+          session.add(doc)
+        except Exception as e:
+          logging.error(f"Error processing document {doc.id}: {str(e)}")
+          pbar.update(1)
+          continue
 
-      session.commit()
+        session.commit()
+        pbar.update(1)
 
   except Exception as e:
     logging.error(f"Database error: {str(e)}")
@@ -172,8 +201,9 @@ def main():
       level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-  # Read the CSV file and prepare records
-  df = pd.read_csv("../data/dons.csv", sep=";", encoding="utf-8")
+  # Read the CSV file and prepare records (Markdown or Text)
+  # df = pd.read_csv("../data/dons.csv", sep=";", encoding="utf-8")
+  df = pd.read_csv("../data/dons_md.csv", sep=";", encoding="utf-8")
   records_df = df.apply(prepare_record, axis=1)
 
   upsert(records_df)
