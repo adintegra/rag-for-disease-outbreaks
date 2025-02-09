@@ -139,11 +139,12 @@ def retrieve_dons():
 
   # url = 'https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,TitleSuffix,OverrideTitle,UseOverrideTitle,regionscountries,ItemDefaultUrl,FormattedDate,PublicationDateAndTime&%24format=json&%24top=20&%24skip={}&%24count=true'
   # url = "https://www.who.int/api/news/diseaseoutbreaknews?sf_culture=en&%24orderby=PublicationDate%20asc&%24select=Title,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,TitleSuffix,UrlName&%24format=json&%24count=true&%24top="
-  url = "https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,TitleSuffix,UrlName&%24format=json&%24top=20&%24skip={}&%24count=true"
+  # url = "https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,TitleSuffix,UrlName&%24format=json&%24top=20&%24skip={}&%24count=true"
+  url = "https://www.who.int/api/emergencies/diseaseoutbreaknews?sf_provider=dynamicProvider372&sf_culture=en&$orderby=PublicationDateAndTime%20desc&$expand=EmergencyEvent&$select=Title,TitleSuffix,regionscountries,ItemDefaultUrl,FormattedDate,PublicationDateAndTime,PublicationDate,Summary,Overview,DonId,Epidemiology,Assessment,UrlName&%24format=json&%24top=20&%24skip={}&%24count=true"
 
   all_data = []
   skip = 0
-  total_records = 3124
+  total_records = 3136
   while skip < total_records:
     response = requests.get(url.format(skip))
     if response.status_code == 200:
