@@ -31,14 +31,8 @@ class Document(Base):
   published_at = Column(DateTime)
   summary = Column(Text, nullable=True)
   batch = Column(Integer, nullable=True)
-
-  def __init__(self, meta, contents, url, published_at, summary, batch):
-    self.meta = meta
-    self.contents = contents
-    self.url = url
-    self.published_at = published_at
-    self.summary = summary
-    self.batch = batch
+  event_date = Column(DateTime, nullable=True)
+  created_at = Column(DateTime, nullable=True)
 
   def __repr__(self):
     return "<id {}>".format(self.id)
