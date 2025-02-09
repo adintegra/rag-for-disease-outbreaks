@@ -21,8 +21,8 @@ PG_RETRIEVED = []
 CORPUS = "Full"
 # CORPUS = "Summarized"
 
-MODEL = "all-minilm"  # dim 384 / context window 512
-# MODEL = "nomic-embed-text"  # dim 768 / context window 2048
+# MODEL = "all-minilm"  # dim 384 / context window 512
+MODEL = "nomic-embed-text"  # dim 768 / context window 2048
 # MODEL = "mxbai-embed-large"  # dim 1024 / context window 512
 
 
@@ -141,10 +141,19 @@ def get_bm25_docids(docs):
 
 # Evaluate Retrieval Performance
 def evaluate_retrieval(true_relevant_docs, retrieved_docs):
-  y_true = [1 if doc in true_relevant_docs else 0 for doc in retrieved_docs]
-  y_pred = [1] * len(retrieved_docs)
-  precision = precision_score(y_true, y_pred, zero_division=1)
-  recall = recall_score(y_true, y_pred, zero_division=1)
+  # y_true = [1 if doc in true_relevant_docs else 0 for doc in retrieved_docs]
+  # y_pred = [1] * len(retrieved_docs)
+  # precision = precision_score(y_true, y_pred, zero_division=1)
+  # recall = recall_score(y_true, y_pred, zero_division=1)
+
+  tp = len(list(set(retrieved_docs) & set(true_relevant_docs)))
+  fn = len(true_relevant_docs) - tp
+  fp = len(retrieved_docs) - tp
+
+  # print("TP:", tp, "FN:", fn)
+  precision = tp / (tp + fp)
+  recall = tp / (tp + fn)
+
   return {"precision": precision, "recall": recall}
 
 

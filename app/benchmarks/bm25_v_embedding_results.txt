@@ -1,82 +1,4 @@
 -- Evaluation Results ---------------------------------------------------------
-Model: nomic-embed-text
-Query: ebola outbreaks in africa after 2021
-Full corpus
-
-Embedding Search Results:
-
--- DOC ------------------
-title: ebola virus disease – democratic republic of the congo assessment: who notes that the current resurgence is undesirable, but not unexpected given the identification of wildlife spillover potential in africa, accompanied by the high population density in the region and ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease - democratic republic of the congo summary: the ministry of health of the democratic republic of the congo declared an outbreak of ebola virus disease (evd) in the country after a case was confirmed from mbandaka, equateur province. the onset of sy ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – democratic republic of the congo assessment: on 18 november 2020, the ministry of health of the democratic republic of the congo declared the end of human-to-human transmission of evd over in equateur province [after two maximum incubation period ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – guinea assessment: detection of evd cases is not unexpected in guinea given that the virus is enzootic in some animal populations in the country and can persist in certain body fluids of survivors. in a limited number of cases, secondary transmis ...
--- END ------------------
--- DOC ------------------
-title: end of ebola outbreak in uganda overview: *4 october 2012 -* the ministry of health (moh), uganda has declared today, the end of the ebola haemorrhagic fever (ehf) outbreak in kibaale district. the last case was confirmed on 3 august 2012 and was discharged from the h ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – democratic republic of the congo assessment: preliminary information indicates that the patient visited at least three health facilities in two health zones and was unsafely buried in a third health zone. there is therefore a risk of evd spreadin ...
--- END ------------------
--- DOC ------------------
-title: 1996 - ebola haemorrhagic fever in gabon (new outbreak) - update 5 overview: **19 november 1996** \ \ **disease outbreak reported**  a source from the ministry of health in gabon has notified who that the physician who flew to south africa for treatment on 27 october  ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – democratic republic of the congo assessment: to date, the outbreak is reported in a remote area and appears to be geographically limited. however, in view of the available data, the overall risk is considered high at the national level due to the ...
--- END ------------------
-
-Embedding Retrieved Docs: 8
-[28365, 28279, 28344, 28322, 29362, 28332, 31141, 28597]
-True Positives: [28322, 28332, 28279]
-
-BM25 Search Results:
-
--- DOC ------------------
-title: ebola virus disease – guinea assessment: detection of evd cases is not unexpected in guinea given that the virus is enzootic in some animal populations in the country and can persist in certain body fluids of survivors. in a limited number of cases, secondary transmis ...
--- END ------------------
--- DOC ------------------
-title: yellow fever - east, west, and central africa summary: yellow fever is endemic in the who african region and was among the top five most frequently reported events in the region in 2019 and 2020. twenty-seven countries in africa have been classified as high-risk by th ...
--- END ------------------
--- DOC ------------------
-title: measles - ethiopia summary: measles is endemic in ethiopia, with cases reported every year. between 12 august 2021 and 1 may 2023, 16 814 laboratory-confirmed measles cases and 182 deaths – with a case fatality ratio (cfr) of 1.1% - have been reported nationally. from ...
--- END ------------------
--- DOC ------------------
-title: cholera – cameroon summary: cameroon is among several countries in west and central africa experiencing recurrent cholera outbreaks. between 29 october 2021 and 30 april 2022, a total of 6652 suspected cases including 134 deaths (case fatality ratio 2%) have been repo ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – democratic republic of the congo assessment: the current re-emergence of evd is the fifth outbreak in less than three years. the last evd outbreak was reported in north kivu province earlier this year in february and was declared over on 3 may 20 ...
--- END ------------------
--- DOC ------------------
-title: ebola virus disease – guinea assessment: who considers the risk of spread in the country as very high given the unknown size, duration and origin of the outbreak: potentially large number of contacts: potential spread to other parts of guinea and neighboring countries ...
--- END ------------------
--- DOC ------------------
-title: yellow fever- east, west and central africa region summary: this is an update on the yellow fever situation in the who african region since the last disease outbreak news was published on 2 september 2022. from 1 january 2021 to 7 december 2022, a total of 203 confirm ...
--- END ------------------
--- DOC ------------------
-title: marburg virus disease - ghana summary: on 16 september 2022, the ministry of health (moh) of ghana declared the end of the marburg virus disease (mvd) outbreak that affected the country’s ashanti, savannah and western regions. in accordance with who recommendations th ...
--- END ------------------
-
-BM25 Retrieved Docs: 8
-[28322, 28249, 28192, 28273, 28301, 28330, 28224, 28244]
-True Positives: [28330, 28322, 28301]
-
-Ground Truth: 16
-[28222, 28229, 28231, 28233, 28236, 28243, 28245, 28250, 28256, 28279, 28301, 28311, 28322, 28325, 28330, 28332]
-
-Embedding Evaluation:
- {'precision': 0.375, 'recall': 1.0}
-
-BM25 Evaluation:
- {'precision': 0.375, 'recall': 1.0}
-
-
-
--- Evaluation Results ---------------------------------------------------------
 Model: all-minilm
 Query: ebola outbreaks in africa after 2021
 Full corpus
@@ -147,10 +69,85 @@ Ground Truth: 16
 [28222, 28229, 28231, 28233, 28236, 28243, 28245, 28250, 28256, 28279, 28301, 28311, 28322, 28325, 28330, 28332]
 
 Embedding Evaluation:
- {'precision': 0.0, 'recall': 1.0}
+ {'precision': 0.0, 'recall': 0.0}
 
 BM25 Evaluation:
- {'precision': 0.375, 'recall': 1.0}
+ {'precision': 0.375, 'recall': 0.1875}
 
 
 
+-- Evaluation Results ---------------------------------------------------------
+Model: nomic-embed-text
+Query: ebola outbreaks in africa after 2021
+Full corpus
+
+Embedding Search Results:
+
+-- DOC ------------------
+title: ebola virus disease – democratic republic of the congo assessment: who notes that the current resurgence is undesirable, but not unexpected given the identification of wildlife spillover potential in africa, accompanied by the high population density in the region and ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease - democratic republic of the congo summary: the ministry of health of the democratic republic of the congo declared an outbreak of ebola virus disease (evd) in the country after a case was confirmed from mbandaka, equateur province. the onset of sy ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – democratic republic of the congo assessment: on 18 november 2020, the ministry of health of the democratic republic of the congo declared the end of human-to-human transmission of evd over in equateur province [after two maximum incubation period ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – guinea assessment: detection of evd cases is not unexpected in guinea given that the virus is enzootic in some animal populations in the country and can persist in certain body fluids of survivors. in a limited number of cases, secondary transmis ...
+-- END ------------------
+-- DOC ------------------
+title: end of ebola outbreak in uganda overview: *4 october 2012 -* the ministry of health (moh), uganda has declared today, the end of the ebola haemorrhagic fever (ehf) outbreak in kibaale district. the last case was confirmed on 3 august 2012 and was discharged from the h ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – democratic republic of the congo assessment: preliminary information indicates that the patient visited at least three health facilities in two health zones and was unsafely buried in a third health zone. there is therefore a risk of evd spreadin ...
+-- END ------------------
+-- DOC ------------------
+title: 1996 - ebola haemorrhagic fever in gabon (new outbreak) - update 5 overview: **19 november 1996** \ \ **disease outbreak reported**  a source from the ministry of health in gabon has notified who that the physician who flew to south africa for treatment on 27 october  ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – democratic republic of the congo assessment: to date, the outbreak is reported in a remote area and appears to be geographically limited. however, in view of the available data, the overall risk is considered high at the national level due to the ...
+-- END ------------------
+
+Embedding Retrieved Docs: 8
+[28365, 28279, 28344, 28322, 29362, 28332, 31141, 28597]
+True Positives: [28322, 28332, 28279]
+
+BM25 Search Results:
+
+-- DOC ------------------
+title: ebola virus disease – guinea assessment: detection of evd cases is not unexpected in guinea given that the virus is enzootic in some animal populations in the country and can persist in certain body fluids of survivors. in a limited number of cases, secondary transmis ...
+-- END ------------------
+-- DOC ------------------
+title: yellow fever - east, west, and central africa summary: yellow fever is endemic in the who african region and was among the top five most frequently reported events in the region in 2019 and 2020. twenty-seven countries in africa have been classified as high-risk by th ...
+-- END ------------------
+-- DOC ------------------
+title: measles - ethiopia summary: measles is endemic in ethiopia, with cases reported every year. between 12 august 2021 and 1 may 2023, 16 814 laboratory-confirmed measles cases and 182 deaths – with a case fatality ratio (cfr) of 1.1% - have been reported nationally. from ...
+-- END ------------------
+-- DOC ------------------
+title: cholera – cameroon summary: cameroon is among several countries in west and central africa experiencing recurrent cholera outbreaks. between 29 october 2021 and 30 april 2022, a total of 6652 suspected cases including 134 deaths (case fatality ratio 2%) have been repo ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – democratic republic of the congo assessment: the current re-emergence of evd is the fifth outbreak in less than three years. the last evd outbreak was reported in north kivu province earlier this year in february and was declared over on 3 may 20 ...
+-- END ------------------
+-- DOC ------------------
+title: ebola virus disease – guinea assessment: who considers the risk of spread in the country as very high given the unknown size, duration and origin of the outbreak: potentially large number of contacts: potential spread to other parts of guinea and neighboring countries ...
+-- END ------------------
+-- DOC ------------------
+title: yellow fever- east, west and central africa region summary: this is an update on the yellow fever situation in the who african region since the last disease outbreak news was published on 2 september 2022. from 1 january 2021 to 7 december 2022, a total of 203 confirm ...
+-- END ------------------
+-- DOC ------------------
+title: marburg virus disease - ghana summary: on 16 september 2022, the ministry of health (moh) of ghana declared the end of the marburg virus disease (mvd) outbreak that affected the country’s ashanti, savannah and western regions. in accordance with who recommendations th ...
+-- END ------------------
+
+BM25 Retrieved Docs: 8
+[28322, 28249, 28192, 28273, 28301, 28330, 28224, 28244]
+True Positives: [28330, 28322, 28301]
+
+Ground Truth: 16
+[28222, 28229, 28231, 28233, 28236, 28243, 28245, 28250, 28256, 28279, 28301, 28311, 28322, 28325, 28330, 28332]
+
+Embedding Evaluation:
+ {'precision': 0.375, 'recall': 0.1875}
+
+BM25 Evaluation:
+ {'precision': 0.375, 'recall': 0.1875}
