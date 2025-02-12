@@ -8,6 +8,7 @@
   - [Getting Started](#getting-started)
     - [Python Environment](#python-environment)
     - [Database Setup](#database-setup)
+    - [Schema](#schema)
     - [LangChain](#langchain)
     - [Data](#data)
       - [Acquisition \& Pre-Processing](#acquisition--pre-processing)
@@ -102,41 +103,41 @@ erDiagram
     INTEGER id PK
     INTEGER batch "nullable"
     TEXT contents "nullable"
-    DATETIME created_at "nullable"
-    DATETIME event_date "nullable"
-    JSON meta "nullable"
-    DATETIME published_at "nullable"
     TEXT summary "nullable"
+    JSON meta "nullable"
+    DATETIME event_date "nullable"
     TEXT url "nullable"
+    DATETIME published_at "nullable"
+    DATETIME created_at "nullable"
   }
 
   embedding {
     INTEGER id PK
+    TEXT model "nullable"
     INTEGER document_id FK
     INTEGER chunk_id
-    HALFVEC(1024) embedding_1024 "nullable"
-    HALFVEC(1536) embedding_1536 "nullable"
     HALFVEC(256) embedding_256 "nullable"
-    HALFVEC(3072) embedding_3072 "nullable"
     HALFVEC(384) embedding_384 "nullable"
-    HALFVEC(4096) embedding_4096 "nullable"
     HALFVEC(512) embedding_512 "nullable"
     HALFVEC(768) embedding_768 "nullable"
+    HALFVEC(1024) embedding_1024 "nullable"
+    HALFVEC(1536) embedding_1536 "nullable"
+    HALFVEC(3072) embedding_3072 "nullable"
+    HALFVEC(4096) embedding_4096 "nullable"
     HALFVEC(8192) embedding_8192 "nullable"
-    TEXT model "nullable"
   }
 
   v_doc_embedding {
     INTEGER document_id PK
     INTEGER embedding_id PK
     INTEGER batch "nullable"
+    TEXT model "nullable"
     INTEGER chunk_id "nullable"
     TEXT contents "nullable"
     HALFVEC embedding "nullable"
-    JSON meta "nullable"
-    TEXT model "nullable"
-    DATETIME published_at "nullable"
     TEXT summary "nullable"
+    JSON meta "nullable"
+    DATETIME published_at "nullable"
     TEXT url "nullable"
   }
 
@@ -144,9 +145,9 @@ erDiagram
     INTEGER id PK
     TEXT country_code "nullable"
     TEXT country_name "nullable"
-    DATETIME created_at "nullable"
     TEXT region "nullable"
     TEXT subregion "nullable"
+    DATETIME created_at "nullable"
   }
 
   document ||--o{ embedding : document_id
