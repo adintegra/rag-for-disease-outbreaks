@@ -19,6 +19,9 @@
     - [UI](#ui)
   - [Evaluation](#evaluation)
     - [Sample Questions](#sample-questions)
+    - [Notes on Batches](#notes-on-batches)
+      - [Batch 0](#batch-0)
+      - [Batch 1](#batch-1)
   - [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
     - [What is Cosine Similarity?](#what-is-cosine-similarity)
     - [Cosine Distance](#cosine-distance)
@@ -89,6 +92,68 @@ Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensur
 ```sh
 python create_db.py
 ```
+
+
+### Schema
+<!-- BEGIN_SQLALCHEMY_DOCS -->
+```mermaid
+erDiagram
+  document {
+    INTEGER id PK
+    INTEGER batch "nullable"
+    TEXT contents "nullable"
+    DATETIME created_at "nullable"
+    DATETIME event_date "nullable"
+    JSON meta "nullable"
+    DATETIME published_at "nullable"
+    TEXT summary "nullable"
+    TEXT url "nullable"
+  }
+
+  embedding {
+    INTEGER id PK
+    INTEGER document_id FK
+    INTEGER chunk_id
+    HALFVEC(1024) embedding_1024 "nullable"
+    HALFVEC(1536) embedding_1536 "nullable"
+    HALFVEC(256) embedding_256 "nullable"
+    HALFVEC(3072) embedding_3072 "nullable"
+    HALFVEC(384) embedding_384 "nullable"
+    HALFVEC(4096) embedding_4096 "nullable"
+    HALFVEC(512) embedding_512 "nullable"
+    HALFVEC(768) embedding_768 "nullable"
+    HALFVEC(8192) embedding_8192 "nullable"
+    TEXT model "nullable"
+  }
+
+  v_doc_embedding {
+    INTEGER document_id PK
+    INTEGER embedding_id PK
+    INTEGER batch "nullable"
+    INTEGER chunk_id "nullable"
+    TEXT contents "nullable"
+    HALFVEC embedding "nullable"
+    JSON meta "nullable"
+    TEXT model "nullable"
+    DATETIME published_at "nullable"
+    TEXT summary "nullable"
+    TEXT url "nullable"
+  }
+
+  country_lookup {
+    INTEGER id PK
+    TEXT country_code "nullable"
+    TEXT country_name "nullable"
+    DATETIME created_at "nullable"
+    TEXT region "nullable"
+    TEXT subregion "nullable"
+  }
+
+  document ||--o{ embedding : document_id
+
+```
+<!-- END_SQLALCHEMY_DOCS -->
+
 
 ### LangChain
 
@@ -195,6 +260,26 @@ You should now be able to reach the chat-style interface at http://127.0.0.1:500
 - Which diseases are prevalent in Kenya?
 - Which were the largest disease outbreaks in the last 20 years?
 - Where were outbreaks with the most severe impacts, e.g. deaths?
+
+
+### Notes on Batches
+
+#### Batch 0
+
+- Baseline attempt
+- DONs were put together from two fields mainly
+- Embeddings loaded for nomic and embed-all
+- I think this data is now stored in backup tables in the db (check)
+
+#### Batch 1
+
+- Refined attempt
+- Full DONs were pieced together from all relevant fields
+- The documents were distilled into Markdown storage for the db
+- Vectors were then taken from them for both nomic and embed-all (sometimes exceeding context window)
+- Side quest: The Markdown docs were summarized with gpt-4o-mini
+- Could make a Batch 2 with embeddings for these summaries
+- Alternatively, these could be embedded inline as processing of the requests happens (though embedding is slow)
 
 
 ## Cosine Similarity in Vector Search
