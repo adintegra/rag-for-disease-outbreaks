@@ -8,7 +8,7 @@
   - [Getting Started](#getting-started)
     - [Python Environment](#python-environment)
     - [Database Setup](#database-setup)
-    - [Schema](#schema)
+    - [DB Schema](#db-schema)
     - [LangChain](#langchain)
     - [Data](#data)
       - [Acquisition \& Pre-Processing](#acquisition--pre-processing)
@@ -95,7 +95,7 @@ python create_db.py
 ```
 
 
-### Schema
+### DB Schema
 <!-- BEGIN_SQLALCHEMY_DOCS -->
 ```mermaid
 erDiagram
@@ -198,22 +198,27 @@ All components of this application can be run locally without accessing resource
 
 #### Ollama
 
-[Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g.:
+[Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g. [llama3.2 3B](https://ollama.com/library/llama3.2):
+
+The following are some suggested options for running the model on a separate computer in the same network:
 
 ```
 export OLLAMA_HOST=0.0.0.0
 export OLLAMA_KEEP_ALIVE=15m
 export OLLAMA_FLASH_ATTENTION=true
 export OLLAMA_KV_CACHE_TYPE=q8_0
-ollama run phi4
+ollama serve
 ```
 
-By default, Ollama will expose its API on port 11434. Also, by default, Ollama will limit its context window to 2048 tokens. This is too low for our use case. Therefore, we should adjust it before running our model or simply create our own version with an expanded context window:
+By default, Ollama will expose its API on port 11434.
+
+Also, by default, Ollama will limit its context window to 2048 tokens. This is too low for our use case. Therefore, we should adjust it before running our model or simply create our own model version with an expanded context window. To do so:
 
 ```
+ollama run llama3.2
 ...
 >>> /set parameter num_ctx 16768
->>> /save bla
+>>> /save llama3.2_16kctx
 >>> /bye
 ...
 ```
@@ -221,19 +226,23 @@ By default, Ollama will expose its API on port 11434. Also, by default, Ollama w
 
 #### Embeddings
 
-By default, this app uses the [all-MiniLM-L6-v2](https://www.sbert.net/) Sentence Transformer model to generate the embeddings for our vector store. An other model which works well for embeddings is [nomic-embed-text-v1.5](https://www.nomic.ai/blog/posts/nomic-embed-text-v1). Run the following to pull the model into Ollama:
+By default, this app uses the [all-MiniLM-L6-v2](https://www.sbert.net/) Sentence Transformer model to generate the embeddings for our vector store. An other model which works very well for embeddings is [nomic-embed-text-v1.5](https://www.nomic.ai/blog/posts/nomic-embed-text-v1). Run the following to pull the models into Ollama:
 
 ```sh
 ollama pull all-minilm
+...
+ollama pull nomic-embed-text
 ```
 
-Once ready, run [./app/db/load_embeddings.py](./app/db/load_embeddings.py):
+Once the models have been downloaded, the next step is to create the embeddings for our documents.
+Run [./app/db/load_embeddings.py](./app/db/load_embeddings.py):
 
 ```sh
 python load_embeddings.py
 ```
 
 **Note:** This will take some time to process – expect at least 15 minutes on a modern Mac laptop.
+
 
 #### Retrieval
 
