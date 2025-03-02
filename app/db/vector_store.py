@@ -62,6 +62,7 @@ class Embedding(Base):
 
 class DocEmbeddingView(Base):
   __tablename__ = "v_doc_embedding"
+  __table_args__ = {"extend_existing": True}
 
   document_id = Column(Integer, primary_key=True)
   embedding_id = Column(Integer, primary_key=True)
@@ -75,7 +76,16 @@ class DocEmbeddingView(Base):
   batch = Column(Integer)
   embedding = Column(HALFVEC)
 
-  __table_args__ = {"extend_existing": True}
-
   def __repr__(self):
     return "<id {}>".format(self.id)
+
+
+class CountryLookup(Base):
+  __tablename__ = "country_lookup"
+
+  id = Column(Integer, primary_key=True, autoincrement=True)
+  country_code = Column(Text, nullable=True)
+  country_name = Column(Text, nullable=True)
+  region = Column(Text, nullable=True)
+  subregion = Column(Text, nullable=True)
+  created_at = Column(DateTime, nullable=True)
