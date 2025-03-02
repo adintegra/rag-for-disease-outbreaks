@@ -1,9 +1,9 @@
-# RAG for Malaria Outbreaks
+# Enhancing Epidemiological Intelligence
 
-**How can multi-modal data fusion inform and enhance the prediction and reporting of malaria outbreaks?**
+**A RAG Approach to Disease Outbreak Monitoring**
 
 
-- [RAG for Malaria Outbreaks](#rag-for-malaria-outbreaks)
+- [Enhancing Epidemiological Intelligence](#enhancing-epidemiological-intelligence)
   - [Introduction](#introduction)
   - [Getting Started](#getting-started)
     - [Python Environment](#python-environment)
@@ -59,7 +59,7 @@ graph TD;
 
 ### Python Environment
 
-For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other Python environments.
+For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other (virtual) Python environments.
 
 On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run in Rosetta (i.e. under emulation) and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
 
@@ -173,9 +173,9 @@ A list of interesting data sources pertaining to malaria and other tropical dise
 
 #### Acquisition & Pre-Processing
 
-See [./app/who-don-retriever/](./app/who-don-retriever/) for scripts to scrape and clean the data. In this directory, you'll also find a [README](./app/who-don-retriever/README.md) outlining the process.
+See [./app/who-don-retriever](./app/who-don-retriever/) for scripts to scrape and clean the data. In this directory, you'll also find a [README](./app/who-don-retriever/README.md) outlining the process.
 
-**Note:** At the time of writing, a non-packaged version of the Markdownify library must be installed:
+**Note:** At the time of writing, a non-packaged version of the Markdownify library must be installed. This has better support for tables in Markdown. Some of the DONs contain HTML tables which would otherwise be lost:
 
 ```sh
 pip install git+https://github.com/matthewwithanm/python-markdownify@3026602686f9a77ba0b2e0f6e0cbd42daea978f5
@@ -183,13 +183,13 @@ pip install git+https://github.com/matthewwithanm/python-markdownify@3026602686f
 
 #### Data Ingestion
 
-Populate the document store by running:
+Copy the pre-processed data retrieved in the step above to [./app/data](./app/data/) from where it can be loaded into the database. Populate the document store by running:
 
 ```sh
 python load_documents.py
 ```
 
-This will read
+This will read the CSV data file, do some light pre-processing and load the documents into the database.
 
 
 ### LLM

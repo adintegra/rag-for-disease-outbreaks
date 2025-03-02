@@ -21,7 +21,17 @@ BATCH = 1
 
 # Prepare data for insertion
 def prepare_record(row):
-  """Prepare a record for insertion into the database."""
+  """Prepare a record for insertion into the database.
+
+  This function takes a row from a DataFrame and returns a Series with the
+  following columns:
+  - meta: a dictionary with metadata fields
+  - contents: the content of the document
+  - url: the URL of the document
+  - published_at: the publication date of the document
+  - summary: placeholder for the summary of the document
+  - batch: the batch number
+  """
 
   # Get rid of NaN values
   row = row.fillna("")
@@ -83,6 +93,7 @@ def prepare_record(row):
 
 def upsert(df: pd.DataFrame):
   """Upsert records into the database."""
+
   engine = create_engine(os.getenv("CONNECTION_STRING"))
   Session = sessionmaker(bind=engine)
   session = Session()
@@ -166,6 +177,8 @@ def summarize_documents():
 
 
 def summarize_documents_aws():
+  """Placeholder for summarizing documents using AWS Bedrock."""
+
   brt = boto3.client(service_name="bedrock-runtime")
 
   body = json.dumps(

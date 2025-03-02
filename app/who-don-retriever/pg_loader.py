@@ -11,8 +11,13 @@ from markdownify import MarkdownConverter
 
 def remove_tags(string):
   """
+  Remove HTML tags
+
   Remove HTML tags and specific HTML entities from a given string. It also removes single and double quotes, and other
-  specific HTML entities. Note: This is a simplistic implementation and was later replaced by remove_tags_bs().
+  specific HTML entities.
+
+  Note: This is a simplistic implementation and was later replaced by remove_tags_bs().
+
   Args:
     string (str): The input string containing HTML tags and entities.
   Returns:
@@ -45,13 +50,16 @@ def md(soup, **options):
 
 def remove_tags_bs(string):
   """
-  Remove HTML tags and specific HTML entities from a given string. It also removes single and double quotes, and other
-  specific HTML entities. Uses BeatifulSoup to parse the HTML.
+  Convert source HTML to Markdown
+
+  This function converts the input string containing HTML tags and entities to Markdown using the BeautifulSoup library.
+
   Args:
     string (str): The input string containing HTML tags and entities.
   Returns:
-    str: The cleaned string with HTML tags and entities removed.
+    str: The cleaned string converted to Markdown.
   """
+
   warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
   soup = BeautifulSoup(string, "html.parser")
@@ -73,7 +81,10 @@ def remove_tags_bs(string):
 
 def load_json():
   """
+  Load data from a JSON file
+
   Load data from a JSON file, normalize it into a pandas DataFrame, clean the data, and save it to a CSV file.
+
   Args:
     None
   Returns:
