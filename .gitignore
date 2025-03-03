@@ -59,10 +59,12 @@ target/
 # DotEnv configuration
 .env
 
-# Database
+# Databases
 *.db
 *.rdb
 pgvector_data/
+vector_store/
+chroma.sqlite3
 
 # Pycharm
 .idea
