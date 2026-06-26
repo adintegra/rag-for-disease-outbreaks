@@ -2,7 +2,7 @@ import os
 import sys
 
 # Required to import from parent directory
-sys.path.append("..")
+sys.path.append("../../../")
 
 from dotenv import load_dotenv
 import sqlalchemy as sa

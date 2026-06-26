@@ -18,6 +18,7 @@
       - [Embeddings](#embeddings)
       - [Retrieval](#retrieval)
     - [UI](#ui)
+      - [Advanced UI](#advanced-ui)
   - [Evaluation](#evaluation)
     - [Sample Questions](#sample-questions)
     - [Notes on Batches](#notes-on-batches)
@@ -169,7 +170,7 @@ pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e3
 
 ### Data
 
-A list of interesting data sources pertaining to malaria and other tropical diseases can be found in the subfolders under [./data-collectio](./data-collection/). The code in this repo currently uses data scraped from [WHO DONs](./data-collection/acquisition/WHO%20DONs/) to populate our RAG knowledgebase. It should be fairly straightforward to adapt it to other sources.
+A list of interesting data sources pertaining to malaria and other tropical diseases can be found in the subfolders under [./data-collection](./data-collection/). The code in this repo currently uses data scraped from [WHO DONs](./data-collection/acquisition/WHO%20DONs/) to populate our RAG knowledgebase. It should be fairly straightforward to adapt it to other sources.
 
 #### Acquisition & Pre-Processing
 
@@ -256,10 +257,21 @@ If you've made it this far – great! At this point, run the front-end applicati
 flask run
 ```
 
-You should now be able to reach the chat-style interface at http://127.0.0.1:5000.
+You should now be able to reach a simple chat-style interface at http://127.0.0.1:5000.
 
 
 ![./app/static/rag-chat-ui](./app/static/rag-chat-ui.png)
+
+
+#### Advanced UI
+
+There is a more advanced UI frontend that can be run be
+
+```sh
+gradio gradio-ui.py
+```
+
+You can reach the application by pointing your browser to http://127.0.0.1:7860/
 
 
 ## Evaluation

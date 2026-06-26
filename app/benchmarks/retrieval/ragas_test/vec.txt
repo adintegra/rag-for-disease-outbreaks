@@ -1,0 +1,2 @@
+'NoneType' object has no attribute 'isoformat'
+Split documents into 0 sub-documents.
