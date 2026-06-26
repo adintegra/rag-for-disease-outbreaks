@@ -93,6 +93,8 @@ Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensur
 
 ```sh
 python create_db.py
+# To drop and recreate tables:
+python create_db.py --reset
 ```
 
 

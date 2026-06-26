@@ -15,8 +15,8 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 
-# Set the batch number
-BATCH = 1
+# Set the batch number (align with CURRENT_BATCH in .env)
+BATCH = int(os.getenv("CURRENT_BATCH", "1"))
 
 
 # Prepare data for insertion

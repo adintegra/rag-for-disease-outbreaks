@@ -5,17 +5,17 @@ import time
 from tqdm import tqdm
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_experimental.text_splitter import SemanticChunker
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from langchain_nomic import NomicEmbeddings
 from langchain_ollama import OllamaEmbeddings
 from vector_store import Document, Embedding
 
 
-BATCH = 1
+BATCH = int(os.getenv("CURRENT_BATCH", "1"))
 
 # Run this script to generate embeddings for all documents in the database
-MODEL = "all-minilm"  # dim 384 / context window 512
+MODEL = os.getenv("EMBEDDING_MODEL", "all-minilm")  # dim 384 / context window 512
 # MODEL = "nomic-embed-text"  # dim 768 / context window 2048
 # MODEL = "mxbai-embed-large"  # dim 1024 / context window 512
 
@@ -52,7 +52,7 @@ def clean_db():
   session = Session()
 
   try:
-    session.execute("TRUNCATE TABLE embedding")
+    session.execute(text("TRUNCATE TABLE embedding"))
     session.commit()
   except Exception as e:
     session.rollback()

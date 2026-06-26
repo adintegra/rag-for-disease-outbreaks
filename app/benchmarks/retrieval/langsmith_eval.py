@@ -1,15 +1,14 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 from typing_extensions import Annotated, TypedDict
 from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
 from langsmith import Client
 import ragas_test.rag as rag_bot
 
-APP_PATH = "/Users/mark/Documents/Development/_Repositories/Adintegra/mas-master-thesis"
-
-# load_dotenv("../../../.env")
-load_dotenv(APP_PATH + "/.env")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+load_dotenv(REPO_ROOT / ".env")
 
 
 client = Client()

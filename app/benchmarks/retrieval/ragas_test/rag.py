@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_groq import ChatGroq
 from langchain_chroma import Chroma
@@ -9,11 +10,8 @@ from typing_extensions import List, TypedDict
 from langgraph.graph import START, StateGraph
 from langsmith import traceable
 
-APP_PATH = "/Users/mark/Documents/Development/_Repositories/Adintegra/mas-master-thesis"
-
-# Load environment variables
-# load_dotenv("../../../../.env")
-load_dotenv(APP_PATH + "/.env")
+REPO_ROOT = Path(__file__).resolve().parents[4]
+load_dotenv(REPO_ROOT / ".env")
 
 # Init the embeddings model
 embeddings = OllamaEmbeddings(

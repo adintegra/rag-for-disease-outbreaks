@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import argparse
 import os
 import logging
 from sqlalchemy import create_engine, text
@@ -71,7 +72,7 @@ def create_view():
           d.event_date,
           d.batch,
           CASE
-          WHEN model = 'nomic-embed-text-v1.5' THEN e.embedding_768
+          WHEN model IN ('nomic-embed-text', 'nomic-embed-text-v1.5') THEN e.embedding_768
           WHEN model = 'all-minilm' THEN e.embedding_384
           WHEN model = 'mxbai-embed-large' THEN e.embedding_1024
           ELSE e.embedding_768
@@ -99,13 +100,22 @@ def clean_db():
 def main():
   load_dotenv("../../.env")
 
+  parser = argparse.ArgumentParser(description="Create or reset the pgvector schema.")
+  parser.add_argument(
+    "--reset",
+    action="store_true",
+    help="Drop existing document and embedding tables before recreating them.",
+  )
+  args = parser.parse_args()
+
   # Logging
   if os.getenv("LOGS"):
     logging.basicConfig(
       level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-  clean_db()
+  if args.reset:
+    clean_db()
   create_tables()
   create_view()
 

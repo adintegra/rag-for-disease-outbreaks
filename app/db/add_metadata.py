@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 
-BATCH = 1
+BATCH = int(os.getenv("CURRENT_BATCH", "1"))
 
 
 def update_event_dates():

@@ -58,11 +58,20 @@ target/
 
 # DotEnv configuration
 .env
+.env.*
+!.example.env
+
+# Secrets
+*.pem
+*.key
+credentials.json
+secrets.yaml
 
 # Databases
 *.db
 *.rdb
 pgvector_data/
+app/docker/pgvector_data/
 vector_store/
 chroma.sqlite3
 

@@ -7,14 +7,13 @@ services:
     container_name: pgvector
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - ./pgvector_data:/var/lib/postgresql/data
-    # set shared memory limit when using docker-compose
     shm_size: 128mb
     environment:
       POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGEME}
 
 volumes:
   pgvector_data:

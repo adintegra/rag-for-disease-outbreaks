@@ -157,7 +157,7 @@ def retrieve_dons():
   skip = 0
   total_records = 3136
   while skip < total_records:
-    response = requests.get(url.format(skip))
+    response = requests.get(url.format(skip), timeout=30)
     if response.status_code == 200:
       data = response.json()
       all_data.extend(data["value"])
