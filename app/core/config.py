@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     validation_alias=AliasChoices("DATABASE_URL", "CONNECTION_STRING")
   )
   database_url_direct: str | None = Field(default=None, alias="DATABASE_URL_DIRECT")
-  ollama_base_url: str = "http://localhost:11434"
+
   llm: str = Field(default="llama3.2", validation_alias=AliasChoices("LLM_MODEL", "LLM"))
   llm_base_url: str = Field(
     default="http://localhost:1234/v1",
@@ -64,7 +64,7 @@ class Settings(BaseSettings):
   langsmith_trace_content: bool = False
   langsmith_trace_query: bool = False
   api_key: str | None = None
-  current_batch: int = 1
+
 
   who_don_api_url: str = (
     "https://www.who.int/api/emergencies/diseaseoutbreaknews"
@@ -104,21 +104,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
   return Settings()
-
-
-_LEGACY_ATTRIBUTES = {
-  "database_url": "database_url",
-  "ollama_base_url": "ollama_base_url",
-  "llm": "llm",
-  "current_batch": "current_batch",
-  "embedding_model": "embedding_model",
-  "api_key": "api_key",
-}
-
-
-def __getattr__(name: str):
-  """Keep existing callers working while they migrate to ``get_settings``."""
-  setting_name = _LEGACY_ATTRIBUTES.get(name)
-  if setting_name is None:
-    raise AttributeError(name)
-  return getattr(get_settings(), setting_name)

@@ -105,3 +105,4 @@ chroma.sqlite3
 # Gradio cache
 .gradio
 Enhancing Epidemiological Intelligence.pdf
+.pytest_cache/

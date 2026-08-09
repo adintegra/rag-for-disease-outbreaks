@@ -11,7 +11,6 @@ dependencies = [
   "alembic",
   "beautifulsoup4",
   "flask",
-  "langchain-ollama",
   "langchain-openai>=1.4.2",
   "markdownify",
   "pgvector",
@@ -19,7 +18,6 @@ dependencies = [
   "pydantic-settings",
   "requests",
   "sqlalchemy",
-  "tenacity",
 ]
 
 [dependency-groups]
