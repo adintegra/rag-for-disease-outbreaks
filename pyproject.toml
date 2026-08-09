@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mas-master-thesis"
+version = "0.1.0"
+description = "Multi-agent systems master thesis application"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic",
+  "beautifulsoup4",
+  "flask",
+  "langchain-ollama",
+  "markdownify",
+  "pgvector",
+  "psycopg[binary,pool]",
+  "pydantic-settings",
+  "requests",
+  "sqlalchemy",
+  "tenacity",
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

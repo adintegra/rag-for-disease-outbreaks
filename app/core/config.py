@@ -1,19 +1,78 @@
-import os
+from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
-from dotenv import load_dotenv
+from pydantic import AliasChoices, Field, PositiveInt, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+ROOT_DIR = Path(__file__).resolve().parents[2]
 
-_connection = os.getenv(
-  "CONNECTION_STRING", "postgresql+psycopg://postgres:password@localhost:5432"
-).rstrip("/")
-database_url = (
-  _connection if _connection.endswith("/postgres") else f"{_connection}/postgres"
-)
 
-ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-llm = os.getenv("LLM", "llama3.2")
-current_batch = int(os.getenv("CURRENT_BATCH", "1"))
-embedding_model = os.getenv("EMBEDDING_MODEL", "all-minilm")
-api_key = os.getenv("API_KEY")
+class Settings(BaseSettings):
+  """Validated runtime configuration loaded from the process environment."""
+
+  model_config = SettingsConfigDict(
+    env_file=ROOT_DIR / ".env",
+    env_file_encoding="utf-8",
+    extra="ignore",
+    case_sensitive=False,
+  )
+
+  database_url: str = Field(
+    validation_alias=AliasChoices("DATABASE_URL", "CONNECTION_STRING")
+  )
+  database_url_direct: str | None = Field(default=None, alias="DATABASE_URL_DIRECT")
+  ollama_base_url: str = "http://localhost:11434"
+  llm: str = "llama3.2"
+  embedding_model: str = "all-minilm"
+  embedding_dimensions: PositiveInt = 384
+  embedding_provider: Literal["ollama"] = "ollama"
+  api_key: str | None = None
+  current_batch: int = 1
+
+  who_don_api_url: str = (
+    "https://www.who.int/api/emergencies/diseaseoutbreaknews"
+  )
+  who_request_timeout_seconds: PositiveInt = 30
+  who_page_size: PositiveInt = 20
+  ingestion_source: str = "who_don"
+  ingestion_batch_size: PositiveInt = 100
+  log_level: str = "INFO"
+
+  @field_validator("database_url", "database_url_direct", mode="before")
+  @classmethod
+  def use_psycopg3(cls, value: str | None) -> str | None:
+    if value is None:
+      return None
+    if value.startswith("postgresql://"):
+      return value.replace("postgresql://", "postgresql+psycopg://", 1)
+    if value.startswith("postgres://"):
+      return value.replace("postgres://", "postgresql+psycopg://", 1)
+    return value
+
+  @property
+  def migration_database_url(self) -> str:
+    return self.database_url_direct or self.database_url
+
+
+@lru_cache
+def get_settings() -> Settings:
+  return Settings()
+
+
+_LEGACY_ATTRIBUTES = {
+  "database_url": "database_url",
+  "ollama_base_url": "ollama_base_url",
+  "llm": "llm",
+  "current_batch": "current_batch",
+  "embedding_model": "embedding_model",
+  "api_key": "api_key",
+}
+
+
+def __getattr__(name: str):
+  """Keep existing callers working while they migrate to ``get_settings``."""
+  setting_name = _LEGACY_ATTRIBUTES.get(name)
+  if setting_name is None:
+    raise AttributeError(name)
+  return getattr(get_settings(), setting_name)

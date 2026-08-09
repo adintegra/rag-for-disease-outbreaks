@@ -60,21 +60,20 @@ graph TD;
 
 ### Python Environment
 
-For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other (virtual) Python environments.
-
-On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run in Rosetta (i.e. under emulation) and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
+This project uses [uv](https://docs.astral.sh/uv/) with Python 3.12. From the repository root, create or update the local `.venv` and install the locked dependencies:
 
 ```sh
-CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
-conda activate pg-vector-rag
-pip install -r requirements.txt
+uv sync --dev
 ```
 
-Should you need to remove the environment and start fresh for any reason:
+Run project commands through `uv` so they consistently use this environment:
 
 ```sh
-conda env remove --name pg-vector-rag
+uv run pytest
+uv run ruff check .
 ```
+
+The legacy `requirements*.txt` files describe the original thesis environment and are not the reproducible installation source. `pyproject.toml` and `uv.lock` are authoritative.
 
 ### Database Setup
 
@@ -89,13 +88,13 @@ mkdir pgvector_data
 docker compose up -d
 ```
 
-Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensure you have a `.env` file present (use the provided [.example.env](./.example.env) for guidance) and run:
+For Neon or another PostgreSQL database, configure `DATABASE_URL` in the root `.env`, then apply the versioned schema migrations from the repository root:
 
 ```sh
-python create_db.py
-# To drop and recreate tables:
-python create_db.py --reset
+uv run alembic upgrade head
 ```
+
+The migration enables pgvector and creates persistent `ingest` staging and canonical `rag` schemas. The legacy `app/db/create_db.py` path remains only for the original local prototype tables.
 
 
 ### DB Schema
@@ -186,13 +185,25 @@ pip install git+https://github.com/matthewwithanm/python-markdownify@3026602686f
 
 #### Data Ingestion
 
-Copy the pre-processed data retrieved in the step above to [./app/data](./app/data/) from where it can be loaded into the database. Populate the document store by running:
+The new ingestion command retrieves WHO DON records and persists immutable source observations in the `ingest` schema:
 
 ```sh
-python load_documents.py
+uv run python -m app.ingestion extract
 ```
 
-This will read the CSV data file, do some light pre-processing and load the documents into the database.
+Each invocation records counts and status in `ingest.run`. A failed run can be resumed idempotently with the run UUID:
+
+```sh
+uv run python -m app.ingestion extract --run-id <uuid>
+```
+
+Normalize a completed run into canonical `rag.document` rows:
+
+```sh
+uv run python -m app.ingestion transform --run-id <uuid>
+```
+
+Transformation is batched and resumable. Each raw record is marked `transformed` or `rejected`, and documents are upserted by `(source, source_id)`. Configurable chunk datasets and local Ollama embedding are the next pipeline stages. The legacy CSV loaders remain available only for the original thesis dataset.
 
 
 ### LLM
