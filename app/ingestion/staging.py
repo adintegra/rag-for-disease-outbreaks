@@ -138,6 +138,15 @@ class StagingRepository:
       rejected=rejected,
     )
 
+  def complete_run(self, run_id: uuid.UUID, metadata: dict) -> None:
+    with self.session_factory.begin() as session:
+      run = session.get(IngestionRun, run_id)
+      if run is None:
+        raise ValueError(f"Unknown ingestion run: {run_id}")
+      run.status = "succeeded"
+      run.run_metadata = metadata
+      run.finished_at = datetime.now(UTC)
+
   def fail_run(self, run_id: uuid.UUID, error: Exception) -> None:
     with self.session_factory.begin() as session:
       run = session.get(IngestionRun, run_id)

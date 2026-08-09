@@ -96,6 +96,14 @@ uv run alembic upgrade head
 
 The migration enables pgvector and creates persistent `ingest` staging and canonical `rag` schemas. The legacy `app/db/create_db.py` path remains only for the original local prototype tables.
 
+Run the complete idempotent pipeline manually with:
+
+```sh
+uv run python -m app.ingestion run
+```
+
+This acquires a PostgreSQL advisory lock and runs extraction, transformation, each profile in `INGESTION_CHUNK_PROFILES`, and incremental embeddings. For maintenance while the local embedding endpoint is unavailable, use `--skip-embeddings`; a later normal run will fill missing vectors.
+
 
 ### DB Schema
 <!-- BEGIN_SQLALCHEMY_DOCS -->
@@ -243,6 +251,14 @@ uv run python -m app.generation \
 ```
 
 The Flask application uses the same retrieval and generation path. Run it with `uv run flask --app app.app run`. The legacy CSV loaders remain available only for the original thesis dataset.
+
+For a host cron schedule, use absolute paths and ensure LM Studio is running. Example daily invocation at 04:17:
+
+```cron
+17 4 * * * cd /absolute/path/to/mas-master-thesis && /absolute/path/to/uv run python -m app.ingestion run >> /absolute/path/to/logs/ingestion.log 2>&1
+```
+
+The command exits non-zero on failure, prevents overlapping complete runs, and records final status plus stage metrics in `ingest.run`.
 
 
 ### LLM

@@ -10,6 +10,7 @@ from app.embedding.repository import EmbeddingRepository
 from app.embedding.tracing import EmbeddingTracer
 from app.ingestion.chunk_datasets import ChunkDatasetRepository
 from app.ingestion.chunk_profiles import get_chunk_profile, load_chunk_profiles
+from app.ingestion.orchestration import OrchestrationPipeline, PipelineLock
 from app.ingestion.pipeline import IngestionPipeline
 from app.ingestion.source.who import WhoDonClient
 from app.ingestion.staging import StagingRepository
@@ -39,6 +40,16 @@ def build_parser() -> argparse.ArgumentParser:
   embed.add_argument("--profile", required=True)
   embed.add_argument("--limit", type=int, help="Maximum new chunks this invocation")
   embed.add_argument("--batch-size", type=int, help="Override configured batch size")
+  run = subparsers.add_parser(
+    "run", help="Run extract, transform, chunking, and incremental embeddings"
+  )
+  run.add_argument(
+    "--profile",
+    action="append",
+    dest="profiles",
+    help="Profile to maintain; repeat to override configured profiles",
+  )
+  run.add_argument("--skip-embeddings", action="store_true")
   return parser
 
 
@@ -50,7 +61,51 @@ def main() -> None:
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
   )
 
-  if args.command == "extract":
+  if args.command == "run":
+    engine = get_engine()
+    session_factory = get_session_factory()
+    staging = StagingRepository(session_factory, settings.ingestion_source)
+    extraction = IngestionPipeline(
+      WhoDonClient(
+        settings.who_don_api_url,
+        timeout_seconds=settings.who_request_timeout_seconds,
+        page_size=settings.who_page_size,
+      ),
+      staging,
+    )
+    embedding = EmbeddingPipeline(
+      LocalEmbeddingModel.from_settings(settings),
+      EmbeddingRepository(engine, session_factory),
+      EmbeddingTracer(
+        enabled=settings.langsmith_tracing,
+        project_name=settings.langsmith_project,
+        trace_content=settings.langsmith_trace_content,
+      ),
+    )
+    result = OrchestrationPipeline(
+      PipelineLock(engine, settings.ingestion_source),
+      extraction,
+      TransformationRepository(
+        session_factory,
+        settings.ingestion_source,
+        settings.ingestion_batch_size,
+      ),
+      ChunkDatasetRepository(session_factory),
+      embedding,
+      staging,
+    ).run(
+      args.profiles or settings.scheduled_chunk_profiles,
+      embedding_batch_size=settings.embedding_batch_size,
+      skip_embeddings=args.skip_embeddings,
+    )
+    logger.info(
+      "Complete ingestion succeeded run_id=%s fetched=%d transformed=%d profiles=%d",
+      result.run_id,
+      result.extraction.fetched,
+      result.transformation.processed,
+      len(result.profiles),
+    )
+  elif args.command == "extract":
     source = WhoDonClient(
       settings.who_don_api_url,
       timeout_seconds=settings.who_request_timeout_seconds,

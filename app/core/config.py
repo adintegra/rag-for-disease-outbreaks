@@ -73,6 +73,7 @@ class Settings(BaseSettings):
   who_page_size: PositiveInt = 20
   ingestion_source: str = "who_don"
   ingestion_batch_size: PositiveInt = 100
+  ingestion_chunk_profiles: str = "who-sections-1200"
   log_level: str = "INFO"
 
   @field_validator("database_url", "database_url_direct", mode="before")
@@ -93,6 +94,11 @@ class Settings(BaseSettings):
   @property
   def effective_embedding_model_version(self) -> str:
     return self.embedding_model_version or self.embedding_model
+
+  @property
+  def scheduled_chunk_profiles(self) -> list[str]:
+    profiles = [name.strip() for name in self.ingestion_chunk_profiles.split(",")]
+    return [name for name in profiles if name]
 
 
 @lru_cache
