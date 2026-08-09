@@ -1,0 +1,106 @@
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from pydantic import AliasChoices, Field, PositiveInt, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+class Settings(BaseSettings):
+  """Validated runtime configuration loaded from the process environment."""
+
+  model_config = SettingsConfigDict(
+    env_file=ROOT_DIR / ".env",
+    env_file_encoding="utf-8",
+    extra="ignore",
+    case_sensitive=False,
+  )
+
+  database_url: str = Field(
+    validation_alias=AliasChoices("DATABASE_URL", "CONNECTION_STRING")
+  )
+  database_url_direct: str | None = Field(default=None, alias="DATABASE_URL_DIRECT")
+
+  llm: str = Field(default="llama3.2", validation_alias=AliasChoices("LLM_MODEL", "LLM"))
+  llm_base_url: str = Field(
+    default="http://localhost:1234/v1",
+    validation_alias=AliasChoices("LLM_BASE_URL", "OPENAI_BASE_URL"),
+  )
+  llm_api_key: str = Field(
+    default="lm-studio",
+    validation_alias=AliasChoices("LLM_API_KEY", "OPENAI_API_KEY"),
+  )
+  llm_max_tokens: PositiveInt = 2000
+  llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+  llm_request_timeout_seconds: PositiveInt = 180
+  llm_max_retries: int = Field(default=2, ge=0)
+  rag_context_max_characters: PositiveInt = 12000
+  rag_query_max_characters: PositiveInt = 1000
+  rag_retrieval_profile: str = "sections"
+  http_max_body_bytes: PositiveInt = 16384
+  max_concurrent_generations: PositiveInt = 2
+  require_api_key: bool = False
+  embedding_model: str = "text-embedding-all-minilm-l6-v2-embedding"
+  embedding_model_version: str | None = None
+  embedding_dimensions: PositiveInt = 384
+  embedding_provider: Literal["openai_compatible"] = "openai_compatible"
+  embedding_base_url: str = Field(
+    default="http://localhost:1234/v1",
+    validation_alias=AliasChoices(
+      "EMBEDDING_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE"
+    ),
+  )
+  embedding_api_key: str = Field(
+    default="lm-studio",
+    validation_alias=AliasChoices("EMBEDDING_API_KEY", "OPENAI_API_KEY"),
+  )
+  embedding_batch_size: PositiveInt = 16
+  embedding_max_retries: int = Field(default=3, ge=0)
+  embedding_request_timeout_seconds: PositiveInt = 120
+  langsmith_tracing: bool = False
+  langsmith_project: str = "don-rag-ingestion"
+  langsmith_trace_content: bool = False
+  langsmith_trace_query: bool = False
+  api_key: str | None = None
+
+
+  who_don_api_url: str = (
+    "https://www.who.int/api/emergencies/diseaseoutbreaknews"
+  )
+  who_request_timeout_seconds: PositiveInt = 30
+  who_page_size: PositiveInt = 20
+  ingestion_source: str = "who_don"
+  ingestion_batch_size: PositiveInt = 100
+  ingestion_chunk_profiles: str = "who-sections-1200"
+  log_level: str = "INFO"
+
+  @field_validator("database_url", "database_url_direct", mode="before")
+  @classmethod
+  def use_psycopg3(cls, value: str | None) -> str | None:
+    if value is None:
+      return None
+    if value.startswith("postgresql://"):
+      return value.replace("postgresql://", "postgresql+psycopg://", 1)
+    if value.startswith("postgres://"):
+      return value.replace("postgres://", "postgresql+psycopg://", 1)
+    return value
+
+  @property
+  def migration_database_url(self) -> str:
+    return self.database_url_direct or self.database_url
+
+  @property
+  def effective_embedding_model_version(self) -> str:
+    return self.embedding_model_version or self.embedding_model
+
+  @property
+  def scheduled_chunk_profiles(self) -> list[str]:
+    profiles = [name.strip() for name in self.ingestion_chunk_profiles.split(",")]
+    return [name for name in profiles if name]
+
+
+@lru_cache
+def get_settings() -> Settings:
+  return Settings()

@@ -1,148 +1,141 @@
-from flask import Flask, render_template, request, jsonify, g
-from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
-import os
-import time
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
-from sqlalchemy import select
-from db.vector_store import Document, Embedding
+import hmac
+import logging
+from functools import lru_cache
+from threading import BoundedSemaphore
+
+from flask import Flask, jsonify, render_template, request
+
+from app.core.config import Settings, get_settings
+from app.core.database import get_session_factory
+from app.embedding.model import LocalEmbeddingModel
+from app.generation.model import LocalChatModel
+from app.generation.service import AnswerService
+from app.retrieval.profiles import get_retrieval_profile
+from app.retrieval.repository import RetrievalRepository
+from app.retrieval.search import RetrievalSearch
+from app.retrieval.tracing import RetrievalTracer
 
 
-load_dotenv("../.env")
-
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("CONNECTION_STRING") + "/postgres"
-app.config["SQLALCHEMY_POOL_SIZE"] = 10  # Set the pool size
-app.config["SQLALCHEMY_MAX_OVERFLOW"] = 5  # Allow additional connections
-
-db = SQLAlchemy(app)
-
-# Initialize the embedding models and vector store
-bert_embeddings = OllamaEmbeddings(
-  model="all-minilm", base_url=os.getenv("OLLAMA_BASE_URL")
-)
-nomic_embeddings = OllamaEmbeddings(
-  model="nomic-text-embed-v1.5", base_url=os.getenv("OLLAMA_BASE_URL")
-)
-embeddings = bert_embeddings
-
-llm = OllamaLLM(model=os.getenv("LLM"), base_url=os.getenv("OLLAMA_BASE_URL"))
-# llm = OllamaLLM(
-#   model="llama3.2", base_url=os.getenv("OLLAMA_BASE_URL"), temperature=0.5
-# )
-
-
-def similarity_search(query):
-  """Search for documents directly using pgvector."""
-  g.search_starttime = time.time()
-  app.logger.info(f"{time.time() - g.search_starttime}s: Embedding query vector...")
-  app.logger.info(f"Using model: {embeddings.model}")
-
-  query_vector = embeddings.embed_query(query)
-
-  app.logger.info(f"{time.time() - g.search_starttime}s: Querying vector store...")
-
-  # See https://github.com/pgvector/pgvector-python?tab=readme-ov-file#sqlalchemy
-  # l2_distance also works
-  stmt = (
-    select(
-      Document.id,
-      Document.contents,
-      Document.url,
-      Embedding.embedding_384.cosine_distance(query_vector).label("l2_distance"),
-    )
-    .join(Embedding)
-    .filter(Embedding.model == embeddings.model)
-    .order_by(Embedding.embedding_384.cosine_distance(query_vector))
-    .limit(5)
+@lru_cache
+def build_answer_service() -> AnswerService:
+  settings = get_settings()
+  search = RetrievalSearch(
+    LocalEmbeddingModel.from_settings(settings),
+    RetrievalRepository(get_session_factory()),
+    RetrievalTracer(
+      enabled=settings.langsmith_tracing,
+      project_name=settings.langsmith_project,
+      trace_query=settings.langsmith_trace_query,
+    ),
+  )
+  return AnswerService(
+    search,
+    LocalChatModel.from_settings(settings),
+    max_context_characters=settings.rag_context_max_characters,
   )
 
-  retrieved_docs = db.session.execute(stmt).all()
 
-  if len(retrieved_docs) == 0:
-    raise ValueError("No documents found.")
+def create_app(
+  *,
+  settings: Settings | None = None,
+  answer_service: AnswerService | None = None,
+) -> Flask:
+  settings = settings or get_settings()
+  if settings.require_api_key and not settings.api_key:
+    raise ValueError("API_KEY is required when REQUIRE_API_KEY is enabled")
 
-  # else:
-  #   print(f"Number of documents retrieved: {len(retrieved_docs)}")
-  #   # for doc in retrieved_docs:
-  #   #   print(f"* {doc.id}")
-  #   #   print(f"URL: {doc.url}")
-  #   #   print(f"Similarity: {doc.l2_distance}")
+  flask_app = Flask(__name__)
+  flask_app.config["MAX_CONTENT_LENGTH"] = settings.http_max_body_bytes
+  generation_slots = BoundedSemaphore(settings.max_concurrent_generations)
 
-  app.logger.info(f"{time.time() - g.search_starttime}s: Querying LLM...")
+  @flask_app.get("/")
+  def home():
+    return render_template("index.html")
 
-  #  Query the LLM model to generate a response
-  formatted_response = query_llm(retrieved_docs, query)
+  @flask_app.post("/search")
+  def search():
+    blocked = _check_api_key(settings)
+    if blocked is not None:
+      return blocked
+    if not request.is_json:
+      return jsonify({"error": "Content-Type must be application/json"}), 415
 
-  app.logger.info(
-    f"{time.time() - g.pop('search_starttime', None)}s: Sending response to browser..."
-  )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+      return jsonify({"error": "Request body must be a JSON object"}), 400
+    query = payload.get("query")
+    if not isinstance(query, str) or not query.strip():
+      return jsonify({"error": "A non-empty query is required"}), 400
+    query = query.strip()
+    if len(query) > settings.rag_query_max_characters:
+      return jsonify({"error": "Query is too long"}), 400
 
-  return formatted_response
+    profile_name = payload.get("profile", settings.rag_retrieval_profile)
+    if not isinstance(profile_name, str):
+      return jsonify({"error": "Profile must be a string"}), 400
+    limit = payload.get("limit")
+    if limit is not None and (
+      not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 20
+    ):
+      return jsonify({"error": "Limit must be an integer between 1 and 20"}), 400
+
+    if not generation_slots.acquire(blocking=False):
+      return jsonify({"error": "Generation capacity is busy; retry later"}), 503
+    try:
+      profile = get_retrieval_profile(profile_name)
+      service = answer_service or build_answer_service()
+      result = service.answer(query, profile, limit=limit)
+      sources = [
+        {
+          "citation": index,
+          "chunk_id": chunk.chunk_id,
+          "document_id": chunk.document_id,
+          "title": chunk.title,
+          "section": chunk.section,
+          "published_at": chunk.published_at.isoformat(),
+          "url": chunk.url,
+          "similarity": round(chunk.similarity, 4),
+          "excerpt": chunk.contents[:350]
+          + ("..." if len(chunk.contents) > 350 else ""),
+        }
+        for index, chunk in enumerate(result.search.chunks, start=1)
+      ]
+      return jsonify(
+        {
+          "answer": result.answer,
+          "profile": result.search.profile_name,
+          "sources": sources,
+          "timings": {
+            "query_embedding_seconds": result.search.query_embedding_seconds,
+            "database_seconds": result.search.database_seconds,
+            "retrieval_seconds": result.search.total_seconds,
+            "generation_seconds": result.generation_seconds,
+          },
+        }
+      )
+    except ValueError as error:
+      return jsonify({"error": str(error)}), 400
+    except Exception:
+      flask_app.logger.exception("Search request failed")
+      return jsonify({"error": "An internal error occurred"}), 500
+    finally:
+      generation_slots.release()
+
+  return flask_app
 
 
-def query_llm(docs, query):
-  """Formulate an LLM prompt providing context from our knowledgebase."""
-
-  # Create a prompt that combines the query and retrieved documents
-  prompt_text = f"""Answer the following question based on the provided context:
-
-Question: {query}
-
-Context:
-"""
-  for doc in docs:
-    prompt_text += f"\n{doc.contents}\n"
-
-  prompt_text += "\nAnswer:"
-
-  response = llm.invoke(prompt_text)
-
-  formatted_response = response
-  formatted_response += "<br /><br />- - - - - - - - - - - -<br />Here are the retrieved documents most relevant to the query:<br /><br />"
-
-  for doc in docs:
-    formatted_response += f"<a href='{doc.url}' target='_blank'>Document</a>"
-    formatted_response += f"<p>Cosine Similarity: {doc.l2_distance}</p>"
-    formatted_response += f"<p>Content: {doc.contents[:350]}...</p>"
-
-  return formatted_response
+def _check_api_key(settings: Settings):
+  if not settings.require_api_key:
+    return None
+  provided = request.headers.get("X-API-Key", "")
+  if not hmac.compare_digest(provided, settings.api_key or ""):
+    return jsonify({"error": "Unauthorized"}), 401
+  return None
 
 
-@app.before_request
-def log_route_start():
-  g.start_time = time.time()
+app = create_app()
 
 
-@app.after_request
-def log_route_end(response):
-  route = request.endpoint
-  print(f"{route} processed in {time.time() - g.pop('start_time', None)}s")
-  return response
-
-
-@app.route("/")
-def home():
-  return render_template("./index.html")
-
-
-@app.route("/search", methods=["POST"])
-def search():
-  try:
-    data = request.json
-    query = data.get("query", "")
-
-    if not query:
-      return jsonify({"error": "No query provided"}), 400
-
-    # Perform similarity search
-    docs = similarity_search(query)
-
-    # Format results
-    # for doc in docs:
-    #   results.append({"content": doc.page_content, "metadata": doc.metadata})
-
-    return jsonify({"response": docs})
-
-  except Exception as e:
-    return jsonify({"error": str(e)}), 500
+if __name__ == "__main__":
+  logging.basicConfig(level=logging.INFO)
+  app.run()

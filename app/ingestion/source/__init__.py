@@ -1,0 +1,1 @@
+"""External ingestion source adapters."""

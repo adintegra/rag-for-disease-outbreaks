@@ -1,0 +1,13 @@
+[profiles.who-sections-1200]
+strategy = "who_sections"
+strategy_version = "1"
+max_characters = 1200
+overlap_characters = 150
+include_title = true
+
+[profiles.recursive-1000-150]
+strategy = "recursive_characters"
+strategy_version = "1"
+max_characters = 1000
+overlap_characters = 150
+include_title = true

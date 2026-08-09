@@ -3,39 +3,6 @@
 **A RAG Approach to Disease Outbreak Monitoring**
 
 
-- [Enhancing Epidemiological Intelligence](#enhancing-epidemiological-intelligence)
-  - [Introduction](#introduction)
-  - [Getting Started](#getting-started)
-    - [Python Environment](#python-environment)
-    - [Database Setup](#database-setup)
-    - [DB Schema](#db-schema)
-    - [LangChain](#langchain)
-    - [Data](#data)
-      - [Acquisition \& Pre-Processing](#acquisition--pre-processing)
-      - [Data Ingestion](#data-ingestion)
-    - [LLM](#llm)
-      - [Ollama](#ollama)
-      - [Embeddings](#embeddings)
-      - [Retrieval](#retrieval)
-    - [UI](#ui)
-      - [Advanced UI](#advanced-ui)
-  - [Evaluation](#evaluation)
-    - [Sample Questions](#sample-questions)
-    - [Notes on Batches](#notes-on-batches)
-      - [Batch 0](#batch-0)
-      - [Batch 1](#batch-1)
-  - [Cosine Similarity in Vector Search](#cosine-similarity-in-vector-search)
-    - [What is Cosine Similarity?](#what-is-cosine-similarity)
-    - [Cosine Distance](#cosine-distance)
-    - [Interpreting Results](#interpreting-results)
-  - [References](#references)
-    - [YouTube](#youtube)
-    - [Articles](#articles)
-    - [Repos](#repos)
-    - [Data](#data-1)
-    - [Scientific Papers](#scientific-papers)
-    - [Technical Articles](#technical-articles)
-
 
 ## Introduction
 
@@ -60,113 +27,108 @@ graph TD;
 
 ### Python Environment
 
-For ease of use, this setup guide has been written with [Anaconda](https://www.anaconda.com/download) in mind, however, it should work equally well with other (virtual) Python environments.
-
-On MacOS you must install a native ARM build if you are running on Apple Silicon (M processors). Otherwise, Python will default to x86 builds which will run in Rosetta (i.e. under emulation) and ML will not run at all. See also [here](https://stackoverflow.com/questions/65415996/how-to-specify-the-architecture-or-platform-for-a-new-conda-environment-apple).
+This project uses [uv](https://docs.astral.sh/uv/) with Python 3.12. From the repository root, create or update the local `.venv` and install the locked dependencies:
 
 ```sh
-CONDA_SUBDIR=osx-arm64 conda create --name pg-vector-rag python=3.12 -c conda-forge
-conda activate pg-vector-rag
-pip install -r requirements.txt
+uv sync --dev
 ```
 
-Should you need to remove the environment and start fresh for any reason:
+Run project commands through `uv` so they consistently use this environment:
 
 ```sh
-conda env remove --name pg-vector-rag
+uv run pytest
+uv run ruff check .
 ```
+
+`pyproject.toml` and `uv.lock` are the authoritative environment definition.
 
 ### Database Setup
 
 This project uses the [pgvector](https://github.com/pgvector/pgvector) Postgres extension as a vector store. This allows the data to be stored alongside the embeddings and as such both can be accessed easily through any SQL querying utility.
 
-If you do not wish to run this locally, a cloud-based service such as [Supabase](https://supabase.com/modules/vector) could also be used.
+If you do not wish to run this locally, a cloud-based service such as [Neon](https://neon.tech/) could also be used.
 
 There is a [docker-compose.yml](./app/docker/docker-compose.yml) which sets up a local PGVector instance as a [Docker](https://www.docker.com/products/docker-desktop/) container. **Note:** Please create an empty subdirectory `pgvector_data` before bringing the container up for the first time. This will be mounted as a volume within the Docker container.
 
 ```sh
-mkdir pgvector_data
-docker compose up -d
+mkdir -p app/docker/pgvector_data
+docker compose -f app/docker/docker-compose.yml up -d
 ```
 
-Next, move to the [app/db](./app/db/) folder and prepare the vector store. Ensure you have a `.env` file present (use the provided [.example.env](./.example.env) for guidance) and run:
+For Neon or another PostgreSQL database, configure `DATABASE_URL` in the root `.env`, then apply the versioned schema migrations from the repository root:
 
 ```sh
-python create_db.py
+uv run alembic upgrade head
 ```
+
+The migration enables pgvector and creates persistent `ingest` staging and canonical `rag` schemas.
+
+Run the complete idempotent pipeline manually with:
+
+```sh
+uv run python -m app.ingestion run
+```
+
+This acquires a PostgreSQL advisory lock and runs extraction, transformation, each profile in `INGESTION_CHUNK_PROFILES`, and incremental embeddings. For maintenance while the local embedding endpoint is unavailable, use `--skip-embeddings`; a later normal run will fill missing vectors.
 
 
 ### DB Schema
-<!-- BEGIN_SQLALCHEMY_DOCS -->
+
 ```mermaid
 erDiagram
-  document {
-    INTEGER id PK
-    INTEGER batch "nullable"
-    TEXT contents "nullable"
-    TEXT summary "nullable"
-    JSON meta "nullable"
-    DATETIME event_date "nullable"
-    TEXT url "nullable"
-    DATETIME published_at "nullable"
-    DATETIME created_at "nullable"
+  INGEST_RUN ||--o{ RAW_RECORD : contains
+  DOCUMENT ||--o{ CHUNK_DATASET : produces
+  CHUNK_DATASET ||--o{ CHUNK : contains
+  CHUNK ||--o{ EMBEDDING : has
+
+  INGEST_RUN {
+    UUID id PK
+    TEXT source
+    TEXT status
+    JSONB metadata
   }
-
-  embedding {
-    INTEGER id PK
-    TEXT model "nullable"
-    INTEGER document_id FK
-    INTEGER chunk_id
-    HALFVEC(256) embedding_256 "nullable"
-    HALFVEC(384) embedding_384 "nullable"
-    HALFVEC(512) embedding_512 "nullable"
-    HALFVEC(768) embedding_768 "nullable"
-    HALFVEC(1024) embedding_1024 "nullable"
-    HALFVEC(1536) embedding_1536 "nullable"
-    HALFVEC(3072) embedding_3072 "nullable"
-    HALFVEC(4096) embedding_4096 "nullable"
-    HALFVEC(8192) embedding_8192 "nullable"
+  RAW_RECORD {
+    BIGINT id PK
+    UUID run_id FK
+    TEXT source_id
+    JSONB payload
+    TEXT payload_hash
   }
-
-  v_doc_embedding {
-    INTEGER document_id PK
-    INTEGER embedding_id PK
-    INTEGER batch "nullable"
-    TEXT model "nullable"
-    INTEGER chunk_id "nullable"
-    TEXT contents "nullable"
-    HALFVEC embedding "nullable"
-    TEXT summary "nullable"
-    JSON meta "nullable"
-    DATETIME published_at "nullable"
-    TEXT url "nullable"
+  DOCUMENT {
+    BIGINT id PK
+    TEXT source
+    TEXT source_id
+    TEXT content_hash
+    TIMESTAMPTZ published_at
   }
-
-  country_lookup {
-    INTEGER id PK
-    TEXT country_code "nullable"
-    TEXT country_name "nullable"
-    TEXT region "nullable"
-    TEXT subregion "nullable"
-    DATETIME created_at "nullable"
+  CHUNK_DATASET {
+    BIGINT id PK
+    BIGINT document_id FK
+    TEXT profile_name
+    TEXT configuration_hash
+    TEXT document_hash
   }
-
-  document ||--o{ embedding : document_id
-
+  CHUNK {
+    BIGINT id PK
+    BIGINT chunk_dataset_id FK
+    INTEGER chunk_index
+    TEXT contents
+    TEXT content_hash
+  }
+  EMBEDDING {
+    BIGINT id PK
+    BIGINT chunk_id FK
+    TEXT model
+    TEXT model_version
+    HALFVEC embedding
+  }
 ```
-<!-- END_SQLALCHEMY_DOCS -->
 
+Alembic migrations in `app/db/migrations/` are the schema source of truth.
 
 ### LangChain
 
-This code uses [LangChain](https://python.langchain.com/docs/introduction/) to abstract away some of the lower-level interactions with our LLMs and data.
-
-At the time of writing (Jan 2025) LangChain is quite far behind in the version of pgvector it supports (v0.2.5 – current version is v0.3.6). There is an open [PR](https://github.com/langchain-ai/langchain-postgres/pull/147) for supporting the new features (especially support for the sparse vector type `halfvec`).
-This version of the code can be installed directly from GitHub:
-
-```sh
-pip install git+https://github.com/langchain-ai/langchain-postgres@c32f6beb108e37aad615ee3cbd4c6bd4a693a76d
-```
+LangChain provides the OpenAI-compatible embedding and chat adapters. SQLAlchemy and `pgvector` handle persistence and cosine retrieval directly, while LangSmith tracing is optional.
 
 ### Data
 
@@ -174,104 +136,93 @@ A list of interesting data sources pertaining to malaria and other tropical dise
 
 #### Acquisition & Pre-Processing
 
-See [./app/who-don-retriever](./app/who-don-retriever/) for scripts to scrape and clean the data. In this directory, you'll also find a [README](./app/who-don-retriever/README.md) outlining the process.
-
-**Note:** At the time of writing, a non-packaged version of the Markdownify library must be installed. This has better support for tables in Markdown. Some of the DONs contain HTML tables which would otherwise be lost:
-
-```sh
-pip install git+https://github.com/matthewwithanm/python-markdownify@3026602686f9a77ba0b2e0f6e0cbd42daea978f5
-```
+`app.ingestion.source.who.WhoDonClient` retrieves paginated Disease Outbreak News directly from WHO with bounded retries and request timeouts. Raw source observations are retained in `ingest.raw_record`; HTML sections are normalized to Markdown during the transformation stage.
 
 #### Data Ingestion
 
-Copy the pre-processed data retrieved in the step above to [./app/data](./app/data/) from where it can be loaded into the database. Populate the document store by running:
+The new ingestion command retrieves WHO DON records and persists immutable source observations in the `ingest` schema:
 
 ```sh
-python load_documents.py
+uv run python -m app.ingestion extract
 ```
 
-This will read the CSV data file, do some light pre-processing and load the documents into the database.
-
-
-### LLM
-
-All components of this application can be run locally without accessing resources in the cloud. This includes the language and embedding models.
-
-#### Ollama
-
-[Ollama](https://ollama.com/) makes it easy to run LLMs locally. Download and run the installer. Once installed, run your model of choice, e.g. [llama3.2 3B](https://ollama.com/library/llama3.2):
-
-The following are some suggested options for running the model on a separate computer in the same network:
-
-```
-export OLLAMA_HOST=0.0.0.0
-export OLLAMA_KEEP_ALIVE=15m
-export OLLAMA_FLASH_ATTENTION=true
-export OLLAMA_KV_CACHE_TYPE=q8_0
-ollama serve
-```
-
-By default, Ollama will expose its API on port 11434.
-
-Also, by default, Ollama will limit its context window to 2048 tokens. This is too low for our use case. Therefore, we should adjust it before running our model or simply create our own model version with an expanded context window. To do so:
-
-```
-ollama run llama3.2
-...
->>> /set parameter num_ctx 16768
->>> /save llama3.2_16kctx
->>> /bye
-...
-```
-
-
-#### Embeddings
-
-By default, this app uses the [all-MiniLM-L6-v2](https://www.sbert.net/) Sentence Transformer model to generate the embeddings for our vector store. An other model which works very well for embeddings is [nomic-embed-text-v1.5](https://www.nomic.ai/blog/posts/nomic-embed-text-v1). Run the following to pull the models into Ollama:
+Each invocation records counts and status in `ingest.run`. A failed run can be resumed idempotently with the run UUID:
 
 ```sh
-ollama pull all-minilm
-...
-ollama pull nomic-embed-text
+uv run python -m app.ingestion extract --run-id <uuid>
 ```
 
-Once the models have been downloaded, the next step is to create the embeddings for our documents.
-Run [./app/db/load_embeddings.py](./app/db/load_embeddings.py):
+Normalize a completed run into canonical `rag.document` rows:
 
 ```sh
-python load_embeddings.py
+uv run python -m app.ingestion transform --run-id <uuid>
 ```
 
-**Note:** This will take some time to process – expect at least 15 minutes on a modern Mac laptop.
+Transformation is batched and resumable. Each raw record is marked `transformed` or `rejected`, and documents are upserted by `(source, source_id)`.
+
+List the tracked chunking profiles and generate a dataset:
+
+```sh
+uv run python -m app.ingestion profiles
+uv run python -m app.ingestion chunk --profile who-sections-1200
+uv run python -m app.ingestion chunk --profile recursive-1000-150
+```
+
+Profiles are defined in `app/config/chunk_profiles.toml`. Each profile has a deterministic configuration hash, and each source document can retain multiple chunk datasets. Completed datasets are skipped on reruns.
+
+Validate the configured local OpenAI-compatible embedding endpoint (for example LM Studio), then incrementally embed a profile through LangChain:
+
+```sh
+uv run python -m app.ingestion embed-check
+uv run python -m app.ingestion embed --profile who-sections-1200 --limit 100
+uv run python -m app.ingestion embed --profile who-sections-1200
+```
+
+`--limit` is the maximum number of new chunks for that invocation. Existing current embeddings are skipped, so the unlimited command can safely resume an interrupted or partial run. Batch size can be tuned with `--batch-size` or `EMBEDDING_BATCH_SIZE`.
+
+Run profile-aware cosine retrieval against the current chunks and embeddings:
+
+```sh
+uv run python -m app.retrieval profiles
+uv run python -m app.retrieval search --profile sections \
+  "What disease outbreaks affected Uganda?"
+```
+
+Retrieval supports `--limit`, repeatable `--section`, `--source`, `--published-after`, and `--published-before` filters. Profiles are defined in `app/config/retrieval_profiles.toml`.
+
+With a chat/instruct model configured as `LLM_MODEL` on the local OpenAI-compatible endpoint, generate an evidence-grounded answer:
+
+```sh
+uv run python -m app.generation \
+  "What Ebola outbreaks were reported in Uganda?"
+```
+
+The Flask application uses the same retrieval and generation path. Run it with `uv run flask --app app.app run`.
+
+For a host cron schedule, use absolute paths and ensure LM Studio is running. Example daily invocation at 04:17:
+
+```cron
+17 4 * * * cd /absolute/path/to/mas-master-thesis && /absolute/path/to/uv run python -m app.ingestion run >> /absolute/path/to/logs/ingestion.log 2>&1
+```
+
+The command exits non-zero on failure, prevents overlapping complete runs, and records final status plus stage metrics in `ingest.run`.
 
 
-#### Retrieval
+### Local Models
 
-TODO:
+Embedding and generation use LangChain's OpenAI-compatible adapters. A local server such as LM Studio should expose `/v1/embeddings` and `/v1/chat/completions`; configure `EMBEDDING_BASE_URL`, `EMBEDDING_MODEL`, `LLM_BASE_URL`, and `LLM_MODEL` in the root `.env`. The current tested setup uses `text-embedding-all-minilm-l6-v2-embedding` for 384-dimensional embeddings and `qwen2.5-7b-instruct` for cited answers.
 
 ### UI
 
-If you've made it this far – great! At this point, run the front-end application (from within the [app](./app/) directory):
+Run the Flask application from the repository root:
 
 ```sh
-flask run
+uv run flask --app app.app run
 ```
 
-You should now be able to reach a simple chat-style interface at http://127.0.0.1:5000.
+The chat interface is available at http://127.0.0.1:5000 and uses the same profile-aware retrieval and evidence-grounded generation modules as the CLIs.
 
-
-![./app/static/rag-chat-ui](./app/static/rag-chat-ui.png)
-
-
-#### Advanced UI
-
-There is a more advanced UI frontend that can be run be
-
-```sh
-gradio gradio-ui.py
-```
-
-You can reach the application by pointing your browser to http://127.0.0.1:7860/
+![RAG chat UI](./app/static/rag-chat-ui.png)
 
 
 ## Evaluation
@@ -283,25 +234,6 @@ You can reach the application by pointing your browser to http://127.0.0.1:7860/
 - Which were the largest disease outbreaks in the last 20 years?
 - Where were outbreaks with the most severe impacts, e.g. deaths?
 
-
-### Notes on Batches
-
-#### Batch 0
-
-- Baseline attempt
-- DONs were put together from two fields mainly
-- Embeddings loaded for nomic and embed-all
-- I think this data is now stored in backup tables in the db (check)
-
-#### Batch 1
-
-- Refined attempt
-- Full DONs were pieced together from all relevant fields
-- The documents were distilled into Markdown storage for the db
-- Vectors were then taken from them for both nomic and embed-all (sometimes exceeding context window)
-- Side quest: The Markdown docs were summarized with gpt-4o-mini
-- Could make a Batch 2 with embeddings for these summaries
-- Alternatively, these could be embedded inline as processing of the requests happens (though embedding is slow)
 
 
 ## Cosine Similarity in Vector Search
