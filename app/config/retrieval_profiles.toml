@@ -1,0 +1,8 @@
+[profiles.sections]
+chunk_profile = "who-sections-1200"
+embedding_model = "text-embedding-all-minilm-l6-v2-embedding"
+embedding_model_version = "text-embedding-all-minilm-l6-v2-embedding"
+distance = "cosine"
+default_limit = 8
+candidate_multiplier = 3
+max_chunks_per_document = 2

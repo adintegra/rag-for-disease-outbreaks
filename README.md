@@ -223,7 +223,17 @@ uv run python -m app.ingestion embed --profile who-sections-1200 --limit 100
 uv run python -m app.ingestion embed --profile who-sections-1200
 ```
 
-`--limit` is the maximum number of new chunks for that invocation. Existing current embeddings are skipped, so the unlimited command can safely resume an interrupted or partial run. Batch size can be tuned with `--batch-size` or `EMBEDDING_BATCH_SIZE`. The legacy CSV loaders remain available only for the original thesis dataset.
+`--limit` is the maximum number of new chunks for that invocation. Existing current embeddings are skipped, so the unlimited command can safely resume an interrupted or partial run. Batch size can be tuned with `--batch-size` or `EMBEDDING_BATCH_SIZE`.
+
+Run profile-aware cosine retrieval against the current chunks and embeddings:
+
+```sh
+uv run python -m app.retrieval profiles
+uv run python -m app.retrieval search --profile sections \
+  "What disease outbreaks affected Uganda?"
+```
+
+Retrieval supports `--limit`, repeatable `--section`, `--source`, `--published-after`, and `--published-before` filters. Profiles are defined in `app/config/retrieval_profiles.toml`. The legacy CSV loaders remain available only for the original thesis dataset.
 
 
 ### LLM

@@ -44,6 +44,7 @@ class Settings(BaseSettings):
   langsmith_tracing: bool = False
   langsmith_project: str = "don-rag-ingestion"
   langsmith_trace_content: bool = False
+  langsmith_trace_query: bool = False
   api_key: str | None = None
   current_batch: int = 1
 

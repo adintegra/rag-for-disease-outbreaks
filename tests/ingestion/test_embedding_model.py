@@ -26,6 +26,22 @@ def test_embedding_model_validates_a_complete_batch() -> None:
   assert adapter.calls == [["one", "two"]]
 
 
+def test_embedding_model_embeds_and_validates_query() -> None:
+  adapter = FakeEmbeddings([[0.1, 0.2]])
+  model = LocalEmbeddingModel(adapter, EmbeddingIdentity("model", "v1", 2))
+
+  assert model.embed_query("outbreak") == [0.1, 0.2]
+
+
+def test_embedding_model_rejects_empty_query() -> None:
+  model = LocalEmbeddingModel(
+    FakeEmbeddings([[0.1, 0.2]]), EmbeddingIdentity("model", "v1", 2)
+  )
+
+  with pytest.raises(ValueError, match="non-empty"):
+    model.embed_query("  ")
+
+
 def test_embedding_model_rejects_dimension_mismatch() -> None:
   model = LocalEmbeddingModel(
     FakeEmbeddings([[0.1]]), EmbeddingIdentity("model", "v1", 2)

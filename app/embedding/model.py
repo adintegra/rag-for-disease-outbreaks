@@ -53,6 +53,13 @@ class LocalEmbeddingModel:
     self.embed_documents(["Disease outbreak embedding preflight."])
     return EmbeddingPreflight(self.identity, perf_counter() - started)
 
+  def embed_query(self, query: str) -> list[float]:
+    if not query.strip():
+      raise ValueError("Embedding query must contain non-empty text")
+    vector = self.embeddings.embed_query(query)
+    self._validate([vector], 1)
+    return vector
+
   def embed_documents(self, texts: list[str]) -> list[list[float]]:
     if not texts or any(not text.strip() for text in texts):
       raise ValueError("Embedding inputs must contain non-empty text")
