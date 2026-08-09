@@ -213,7 +213,17 @@ uv run python -m app.ingestion chunk --profile who-sections-1200
 uv run python -m app.ingestion chunk --profile recursive-1000-150
 ```
 
-Profiles are defined in `app/config/chunk_profiles.toml`. Each profile has a deterministic configuration hash, and each source document can retain multiple chunk datasets. Completed datasets are skipped on reruns. Local Ollama embedding is the next pipeline stage. The legacy CSV loaders remain available only for the original thesis dataset.
+Profiles are defined in `app/config/chunk_profiles.toml`. Each profile has a deterministic configuration hash, and each source document can retain multiple chunk datasets. Completed datasets are skipped on reruns.
+
+Validate the configured local OpenAI-compatible embedding endpoint (for example LM Studio), then incrementally embed a profile through LangChain:
+
+```sh
+uv run python -m app.ingestion embed-check
+uv run python -m app.ingestion embed --profile who-sections-1200 --limit 100
+uv run python -m app.ingestion embed --profile who-sections-1200
+```
+
+`--limit` is the maximum number of new chunks for that invocation. Existing current embeddings are skipped, so the unlimited command can safely resume an interrupted or partial run. Batch size can be tuned with `--batch-size` or `EMBEDDING_BATCH_SIZE`. The legacy CSV loaders remain available only for the original thesis dataset.
 
 
 ### LLM

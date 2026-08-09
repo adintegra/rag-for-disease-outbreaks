@@ -9,6 +9,7 @@ def test_new_schema_tables_are_registered() -> None:
     "rag.chunk_dataset",
     "rag.chunk",
     "rag.embedding",
+    "rag.embedding_run",
   }.issubset(Base.metadata.tables)
 
 

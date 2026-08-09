@@ -3,7 +3,11 @@ import logging
 import uuid
 
 from app.core.config import get_settings
-from app.core.database import get_session_factory
+from app.core.database import get_engine, get_session_factory
+from app.embedding.model import LocalEmbeddingModel
+from app.embedding.pipeline import EmbeddingPipeline
+from app.embedding.repository import EmbeddingRepository
+from app.embedding.tracing import EmbeddingTracer
 from app.ingestion.chunk_datasets import ChunkDatasetRepository
 from app.ingestion.chunk_profiles import get_chunk_profile, load_chunk_profiles
 from app.ingestion.pipeline import IngestionPipeline
@@ -28,6 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
   )
   chunk.add_argument("--profile", required=True)
   subparsers.add_parser("profiles", help="List configured chunk profiles")
+  subparsers.add_parser("embed-check", help="Validate the local embedding endpoint")
+  embed = subparsers.add_parser(
+    "embed", help="Incrementally embed one chunk profile"
+  )
+  embed.add_argument("--profile", required=True)
+  embed.add_argument("--limit", type=int, help="Maximum new chunks this invocation")
+  embed.add_argument("--batch-size", type=int, help="Override configured batch size")
   return parser
 
 
@@ -90,4 +101,43 @@ def main() -> None:
         f"{profile.name}: {profile.strategy}@{profile.strategy_version} "
         f"max={profile.max_characters} overlap={profile.overlap_characters} "
         f"hash={profile.configuration_hash[:12]}"
+      )
+  elif args.command in {"embed-check", "embed"}:
+    model = LocalEmbeddingModel.from_settings(settings)
+    repository = EmbeddingRepository(get_engine(), get_session_factory())
+    tracer = EmbeddingTracer(
+      enabled=settings.langsmith_tracing,
+      project_name=settings.langsmith_project,
+      trace_content=settings.langsmith_trace_content,
+    )
+    pipeline = EmbeddingPipeline(model, repository, tracer)
+    if args.command == "embed-check":
+      result = pipeline.preflight()
+      logger.info(
+        "Embedding preflight succeeded model=%s version=%s dimensions=%d latency_seconds=%.3f",
+        result.identity.model,
+        result.identity.model_version,
+        result.identity.dimensions,
+        result.latency_seconds,
+      )
+    else:
+      profile = get_chunk_profile(args.profile)
+      result = pipeline.run(
+        profile,
+        batch_size=args.batch_size or settings.embedding_batch_size,
+        limit=args.limit,
+      )
+      logger.info(
+        "Embedding run complete run_id=%s profile=%s selected=%d embedded=%d elapsed_seconds=%.2f chunks_per_second=%.2f estimated_remaining_seconds=%s",
+        result.run_id,
+        result.profile_name,
+        result.selected,
+        result.embedded,
+        result.elapsed_seconds,
+        result.chunks_per_second,
+        (
+          f"{result.estimated_remaining_seconds:.0f}"
+          if result.estimated_remaining_seconds is not None
+          else "unknown"
+        ),
       )

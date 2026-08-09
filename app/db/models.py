@@ -6,6 +6,7 @@ from pgvector.sqlalchemy import HALFVEC
 from sqlalchemy import (
   BigInteger,
   DateTime,
+  Float,
   ForeignKey,
   Integer,
   String,
@@ -182,6 +183,33 @@ class Chunk(Base):
   dataset: Mapped[ChunkDataset] = relationship(back_populates="chunks")
   embeddings: Mapped[list["Embedding"]] = relationship(
     back_populates="chunk", cascade="all, delete-orphan"
+  )
+
+
+class EmbeddingRun(Base):
+  __tablename__ = "embedding_run"
+  __table_args__: ClassVar[dict[str, str]] = {"schema": "rag"}
+
+  id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+  profile_name: Mapped[str] = mapped_column(String, nullable=False)
+  configuration_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+  model: Mapped[str] = mapped_column(String, nullable=False)
+  model_version: Mapped[str] = mapped_column(String, nullable=False)
+  dimensions: Mapped[int] = mapped_column(Integer, nullable=False)
+  status: Mapped[str] = mapped_column(String, nullable=False)
+  started_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), server_default=func.now(), nullable=False
+  )
+  finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+  selected_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+  embedded_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+  failed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+  batch_size: Mapped[int] = mapped_column(Integer, nullable=False)
+  requested_limit: Mapped[int | None] = mapped_column(Integer)
+  elapsed_seconds: Mapped[float | None] = mapped_column(Float)
+  error_summary: Mapped[str | None] = mapped_column(Text)
+  run_metadata: Mapped[dict] = mapped_column(
+    "metadata", JSONB, default=dict, nullable=False
   )
 
 

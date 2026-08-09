@@ -12,6 +12,7 @@ dependencies = [
   "beautifulsoup4",
   "flask",
   "langchain-ollama",
+  "langchain-openai>=1.4.2",
   "markdownify",
   "pgvector",
   "psycopg[binary,pool]",
