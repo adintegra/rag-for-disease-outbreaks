@@ -233,7 +233,16 @@ uv run python -m app.retrieval search --profile sections \
   "What disease outbreaks affected Uganda?"
 ```
 
-Retrieval supports `--limit`, repeatable `--section`, `--source`, `--published-after`, and `--published-before` filters. Profiles are defined in `app/config/retrieval_profiles.toml`. The legacy CSV loaders remain available only for the original thesis dataset.
+Retrieval supports `--limit`, repeatable `--section`, `--source`, `--published-after`, and `--published-before` filters. Profiles are defined in `app/config/retrieval_profiles.toml`.
+
+With a chat/instruct model configured as `LLM_MODEL` on the local OpenAI-compatible endpoint, generate an evidence-grounded answer:
+
+```sh
+uv run python -m app.generation \
+  "What Ebola outbreaks were reported in Uganda?"
+```
+
+The Flask application uses the same retrieval and generation path. Run it with `uv run flask --app app.app run`. The legacy CSV loaders remain available only for the original thesis dataset.
 
 
 ### LLM

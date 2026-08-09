@@ -23,7 +23,25 @@ class Settings(BaseSettings):
   )
   database_url_direct: str | None = Field(default=None, alias="DATABASE_URL_DIRECT")
   ollama_base_url: str = "http://localhost:11434"
-  llm: str = "llama3.2"
+  llm: str = Field(default="llama3.2", validation_alias=AliasChoices("LLM_MODEL", "LLM"))
+  llm_base_url: str = Field(
+    default="http://localhost:1234/v1",
+    validation_alias=AliasChoices("LLM_BASE_URL", "OPENAI_BASE_URL"),
+  )
+  llm_api_key: str = Field(
+    default="lm-studio",
+    validation_alias=AliasChoices("LLM_API_KEY", "OPENAI_API_KEY"),
+  )
+  llm_max_tokens: PositiveInt = 2000
+  llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+  llm_request_timeout_seconds: PositiveInt = 180
+  llm_max_retries: int = Field(default=2, ge=0)
+  rag_context_max_characters: PositiveInt = 12000
+  rag_query_max_characters: PositiveInt = 1000
+  rag_retrieval_profile: str = "sections"
+  http_max_body_bytes: PositiveInt = 16384
+  max_concurrent_generations: PositiveInt = 2
+  require_api_key: bool = False
   embedding_model: str = "text-embedding-all-minilm-l6-v2-embedding"
   embedding_model_version: str | None = None
   embedding_dimensions: PositiveInt = 384

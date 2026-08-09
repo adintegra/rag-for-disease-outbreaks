@@ -71,7 +71,6 @@
     const chatContainer = document.getElementById('chat-container');
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
-    const apiKey = {{ api_key|tojson }};
 
     messageForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -87,17 +86,10 @@
       chatContainer.appendChild(loadingDiv);
 
       try {
-        const headers = { 'Content-Type': 'application/json' };
-        const body = { query: message };
-        if (apiKey) {
-          headers['X-API-Key'] = apiKey;
-          body.api_key = apiKey;
-        }
-
         const response = await fetch('/search', {
           method: 'POST',
-          headers,
-          body: JSON.stringify(body),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: message }),
         });
 
         chatContainer.removeChild(loadingDiv);
@@ -148,12 +140,12 @@
             link.href = source.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = 'Source document';
+            link.textContent = `[${source.citation}] ${source.title || 'Source document'}`;
             item.appendChild(link);
           }
 
           const similarity = document.createElement('p');
-          similarity.textContent = `Cosine distance: ${source.similarity}`;
+          similarity.textContent = `Section: ${source.section || 'unknown'} · Similarity: ${source.similarity}`;
           item.appendChild(similarity);
 
           const excerpt = document.createElement('p');
