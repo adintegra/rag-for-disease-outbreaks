@@ -135,6 +135,7 @@ class ChunkDataset(Base):
   document_id: Mapped[int] = mapped_column(
     ForeignKey("rag.document.id", ondelete="CASCADE"), nullable=False
   )
+  profile_name: Mapped[str | None] = mapped_column(String)
   strategy: Mapped[str] = mapped_column(String, nullable=False)
   strategy_version: Mapped[str] = mapped_column(String, nullable=False)
   parameters: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)

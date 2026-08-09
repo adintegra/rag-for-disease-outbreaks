@@ -4,6 +4,8 @@ import uuid
 
 from app.core.config import get_settings
 from app.core.database import get_session_factory
+from app.ingestion.chunk_datasets import ChunkDatasetRepository
+from app.ingestion.chunk_profiles import get_chunk_profile, load_chunk_profiles
 from app.ingestion.pipeline import IngestionPipeline
 from app.ingestion.source.who import WhoDonClient
 from app.ingestion.staging import StagingRepository
@@ -21,6 +23,11 @@ def build_parser() -> argparse.ArgumentParser:
     "transform", help="Normalize staged records into canonical documents"
   )
   transform.add_argument("--run-id", type=uuid.UUID, required=True)
+  chunk = subparsers.add_parser(
+    "chunk", help="Generate a reproducible chunk dataset"
+  )
+  chunk.add_argument("--profile", required=True)
+  subparsers.add_parser("profiles", help="List configured chunk profiles")
   return parser
 
 
@@ -65,3 +72,22 @@ def main() -> None:
       result.unchanged,
       result.rejected,
     )
+  elif args.command == "chunk":
+    profile = get_chunk_profile(args.profile)
+    result = ChunkDatasetRepository(get_session_factory()).generate(profile)
+    logger.info(
+      "Chunk dataset complete profile=%s documents=%d created=%d skipped=%d failed=%d chunks=%d",
+      result.profile_name,
+      result.documents,
+      result.created,
+      result.skipped,
+      result.failed,
+      result.chunks,
+    )
+  elif args.command == "profiles":
+    for profile in load_chunk_profiles().values():
+      print(
+        f"{profile.name}: {profile.strategy}@{profile.strategy_version} "
+        f"max={profile.max_characters} overlap={profile.overlap_characters} "
+        f"hash={profile.configuration_hash[:12]}"
+      )

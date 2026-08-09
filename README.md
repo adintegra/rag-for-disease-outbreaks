@@ -203,7 +203,17 @@ Normalize a completed run into canonical `rag.document` rows:
 uv run python -m app.ingestion transform --run-id <uuid>
 ```
 
-Transformation is batched and resumable. Each raw record is marked `transformed` or `rejected`, and documents are upserted by `(source, source_id)`. Configurable chunk datasets and local Ollama embedding are the next pipeline stages. The legacy CSV loaders remain available only for the original thesis dataset.
+Transformation is batched and resumable. Each raw record is marked `transformed` or `rejected`, and documents are upserted by `(source, source_id)`.
+
+List the tracked chunking profiles and generate a dataset:
+
+```sh
+uv run python -m app.ingestion profiles
+uv run python -m app.ingestion chunk --profile who-sections-1200
+uv run python -m app.ingestion chunk --profile recursive-1000-150
+```
+
+Profiles are defined in `app/config/chunk_profiles.toml`. Each profile has a deterministic configuration hash, and each source document can retain multiple chunk datasets. Completed datasets are skipped on reruns. Local Ollama embedding is the next pipeline stage. The legacy CSV loaders remain available only for the original thesis dataset.
 
 
 ### LLM
