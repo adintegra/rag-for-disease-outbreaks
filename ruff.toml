@@ -1,5 +1,7 @@
 # Exclude a variety of commonly ignored directories.
 exclude = [
+    "archive",
+    "data-collection",
     ".bzr",
     ".direnv",
     ".eggs",
