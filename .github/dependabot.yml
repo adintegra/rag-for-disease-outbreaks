@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Wait a few days before adopting freshly published releases (does not
+    # delay security updates).
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for all non-major bumps, so there is a single PR to review/merge.
+      uv-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+      # Security fixes are batched too, including major bumps.
+      uv-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 3
+    groups:
+      github-actions:
+        patterns: ["*"]
